@@ -2,12 +2,13 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useApp } from '../store/AppContext';
 import { ProgressRing } from '../components/Charts';
-import { CheckIcon, ChevronRight, DropIcon, FlameIcon, MinusIcon, MoonIcon, PlusIcon, WalkIcon } from '../components/Icons';
+import { ChevronRight, DropIcon, FlameIcon, MealIcon, MinusIcon, MoonIcon, PlusIcon, WalkIcon } from '../components/Icons';
 import { addDays, formatLong, fromKey, greeting, todayKey } from '../utils/date';
-import { currentPhase } from '../utils/cycle';
+import { currentPhase, trainingAdjustment } from '../utils/cycle';
 import { nextSessionAfter, restDayFor, sessionFor, weekNumber } from '../utils/schedule';
 import { setsCompleted, weekStreak, workoutsThisWeek } from '../utils/stats';
 import { EMPTY_HABIT } from '../store/types';
+import { proteinTargetFor } from '../data/meals';
 
 const DAYS_BACK = 21;
 const DAYS_FORWARD = 28;
@@ -25,6 +26,7 @@ export function TodayScreen() {
   const restDay = restDayFor(start, selected);
   const log = state.workouts.find((w) => w.date === selected && w.sessionId === session?.id);
   const phase = currentPhase(state.cycle, selected);
+  const adjustment = trainingAdjustment(state.cycle, selected);
   const habit = state.habits[selected] ?? EMPTY_HABIT;
   const isToday = selected === today;
 
@@ -48,6 +50,8 @@ export function TodayScreen() {
   const doneSets = log ? setsCompleted(log) : 0;
   const upcoming = nextSessionAfter(start, selected);
   const proteinLogged = (state.meals[selected] ?? []).reduce((n, m) => n + m.protein, 0);
+  const proteinTarget = state.profile.proteinTargetOverride ?? proteinTargetFor(state.profile.bodyweightKg);
+  const proteinPct = proteinTarget > 0 ? Math.min(100, (proteinLogged / proteinTarget) * 100) : 0;
   const beforeStart = selected < start;
 
   return (
@@ -133,7 +137,18 @@ export function TodayScreen() {
           </div>
         )}
 
-        {phase && (
+        {adjustment && (
+          <div className="card" style={{ borderColor: 'var(--pink-300)' }}>
+            <span className="pill">🌙 Period · day {adjustment.day}</span>
+            <h3 style={{ marginTop: 10 }}>{adjustment.headline}</h3>
+            <p className="small muted" style={{ marginTop: 6 }}>{adjustment.advice}</p>
+            <Link to="/cycle" className="tiny" style={{ display: 'inline-block', marginTop: 8, color: 'var(--pink-700)', fontWeight: 600, textDecoration: 'none' }}>
+              Open cycle tracker →
+            </Link>
+          </div>
+        )}
+
+        {phase && !adjustment && (
           <div className="card">
             <span className="pill pill-lilac">{phase.emoji} {phase.label} · day {phase.dayOfCycle}</span>
             <h3 style={{ marginTop: 10 }}>{phase.headline}</h3>
@@ -200,19 +215,24 @@ export function TodayScreen() {
             />
           </div>
 
+          <div className="divider" />
+
           <div className="row-between">
             <span className="row small bold" style={{ gap: 8 }}>
-              <span style={{ color: 'var(--pink-500)' }}><CheckIcon size={17} /></span> Protein target hit
+              <span style={{ color: 'var(--pink-500)' }}><MealIcon size={17} /></span> Protein
             </span>
-            <button
-              className={`tick${habit.proteinHit ? ' on' : ''}`}
-              onClick={() => updateHabit(selected, { proteinHit: !habit.proteinHit })}
-              aria-pressed={habit.proteinHit} aria-label="Protein target hit"
-            >
-              <CheckIcon size={19} />
-            </button>
+            <span className="num bold small" style={{ color: proteinLogged >= proteinTarget ? 'var(--pink-600)' : 'var(--ink-soft)' }}>
+              {proteinLogged}g / {proteinTarget}g
+            </span>
           </div>
-          {proteinLogged > 0 && <p className="tiny faint">{proteinLogged}g of protein logged in Meals.</p>}
+          <div className="bar-track"><div className="bar-fill" style={{ width: `${proteinPct}%` }} /></div>
+          <Link to="/meals" className="tiny" style={{ textDecoration: 'none', color: 'var(--pink-700)', fontWeight: 600 }}>
+            {proteinLogged === 0
+              ? 'Log what you ate in Meals and it counts here →'
+              : proteinLogged >= proteinTarget
+                ? 'Target hit for today ✓'
+                : `${proteinTarget - proteinLogged}g to go · add a meal →`}
+          </Link>
         </div>
 
         <Link to="/plan" className="card link-row" style={{ textDecoration: 'none', color: 'inherit', marginTop: 4 }}>

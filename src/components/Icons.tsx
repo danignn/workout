@@ -107,6 +107,10 @@ export const WalkIcon = ({ size = 18 }: Props) => (
   <svg {...base(size)}><circle cx="13" cy="4" r="1.8" /><path d="M11 21l1.5-6L9.5 12l1-5 3.5 2 2.5 2M10.5 21 8 17M12.5 15l3 2 .5 4" /></svg>
 );
 
+export const CycleIcon = ({ size = 22 }: Props) => (
+  <svg {...base(size)}><circle cx="12" cy="12" r="8.5" /><path d="M12 3.5a8.5 8.5 0 0 1 0 17" fill="currentColor" stroke="none" opacity="0.28" /><path d="M12 8.5v3.5l2.5 1.5" /></svg>
+);
+
 export const DropIcon = ({ size = 18 }: Props) => (
   <svg {...base(size)}><path d="M12 3s6 6.4 6 10.2A6 6 0 0 1 6 13.2C6 9.4 12 3 12 3z" /></svg>
 );

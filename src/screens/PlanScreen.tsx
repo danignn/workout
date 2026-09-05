@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { HONEST_NOTES, PROGRAM_META, REST_DAY_BY_OFFSET, REST_RULES, REST_BETWEEN_EXERCISES, SESSION_BY_OFFSET } from '../data/program';
+import { DO_NOT_ADD_BACK, HONEST_NOTES, PROGRAM_META, QUAD_VS_GLUTE, REST_DAY_BY_OFFSET, REST_RULES, REST_BETWEEN_EXERCISES, SESSION_BY_OFFSET } from '../data/program';
 import { ALL_VIDEOS } from '../data/videos';
 import { useApp } from '../store/AppContext';
 import { CheckIcon, ChevronLeft, ChevronRight, InfoIcon } from '../components/Icons';
@@ -204,9 +204,28 @@ export function PlanScreen() {
                 )}
               </div>
             ))}
-            <div className="card card-flat">
-              <div className="section-title" style={{ margin: '0 0 6px' }}>For comparison</div>
-              <p className="small muted">{PROGRAM_META.veraLegDay}</p>
+            <div className="card">
+              <div className="section-title" style={{ margin: '0 0 6px' }}>Quad-dominant vs glute-dominant</div>
+              <p className="small bold" style={{ marginTop: 8 }}>Grows quads</p>
+              <p className="small muted">{QUAD_VS_GLUTE.quad}</p>
+              <p className="small bold" style={{ marginTop: 10 }}>Grows glutes and hamstrings</p>
+              <p className="small muted">{QUAD_VS_GLUTE.glute}</p>
+            </div>
+
+            <div className="card">
+              <div className="section-title" style={{ margin: '0 0 4px' }}>Do not add back</div>
+              <p className="tiny faint" style={{ marginBottom: 6 }}>
+                Removed on purpose. Each one works against a goal you named.
+              </p>
+              {DO_NOT_ADD_BACK.map((x) => (
+                <div className="mobility-item" key={x.name}>
+                  <span className="mobility-dot" style={{ background: '#e88' }} />
+                  <span className="grow">
+                    <span className="small bold" style={{ display: 'block' }}>{x.name}</span>
+                    <span className="tiny muted">{x.reason}</span>
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
         )}

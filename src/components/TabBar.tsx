@@ -1,11 +1,12 @@
 import { NavLink } from 'react-router-dom';
-import { CalendarIcon, ChartIcon, HomeIcon, MealIcon, UserIcon } from './Icons';
+import { CalendarIcon, ChartIcon, CycleIcon, HomeIcon, MealIcon, UserIcon } from './Icons';
 
 const TABS = [
   { to: '/', label: 'Today', Icon: HomeIcon, end: true },
   { to: '/plan', label: 'Plan', Icon: CalendarIcon, end: false },
   { to: '/progress', label: 'Progress', Icon: ChartIcon, end: false },
   { to: '/meals', label: 'Meals', Icon: MealIcon, end: false },
+  { to: '/cycle', label: 'Cycle', Icon: CycleIcon, end: false },
   { to: '/me', label: 'Me', Icon: UserIcon, end: false },
 ];
 

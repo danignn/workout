@@ -9,13 +9,18 @@ export function loadState(): AppState {
     const parsed = JSON.parse(raw) as Partial<AppState>;
     // Merge over defaults so state written by an older build still opens.
     const base = initialState();
+    // v3 changed the default bodyweight from 60kg to 42kg. Anyone still sitting
+    // on the old default never set it deliberately, so move them across.
+    if ((parsed.version ?? 1) < 3 && parsed.profile?.bodyweightKg === 60) {
+      parsed.profile = { ...parsed.profile, bodyweightKg: 42 };
+    }
     return {
       ...base,
       ...parsed,
       version: STATE_VERSION,
       profile: { ...base.profile, ...parsed.profile },
       settings: { ...base.settings, ...parsed.settings },
-      cycle: { ...base.cycle, ...parsed.cycle },
+      cycle: { ...base.cycle, ...parsed.cycle, logs: parsed.cycle?.logs ?? [] },
       schedule: { ...base.schedule, ...parsed.schedule },
       theme: { ...base.theme, ...parsed.theme },
       media: parsed.media ?? {},

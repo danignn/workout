@@ -14,6 +14,8 @@ export interface Meal {
   cookware: Cookware;
   tags: string[];
   ingredients: string[];
+  /** Grocery item names this meal needs, used to match against your basket. */
+  needs: string[];
   method: string;
   prepAhead?: string;
 }
@@ -49,6 +51,7 @@ export const MEALS: Meal[] = [
     cookware: 'stovetop',
     tags: ['fast', 'high protein'],
     ingredients: ['3 eggs', '1 can Century Tuna flakes in oil, drained', '1 tomato, chopped', '1 small onion', 'Salt and pepper'],
+    needs: ['Century Tuna flakes in oil', 'Eggs', 'Tomato', 'Onion'],
     method: 'Sauté onion and tomato, add drained tuna for a minute. Pour in beaten eggs, cook low until set, fold over. Eat with a cup of rice.',
   },
   {
@@ -62,6 +65,7 @@ export const MEALS: Meal[] = [
     cookware: 'stovetop',
     tags: ['fast', 'easy'],
     ingredients: ['1 can corned beef', '2 eggs', '1 small onion', 'Pepper'],
+    needs: ['Corned beef', 'Eggs', 'Onion'],
     method: 'Fry the onion until soft, add the corned beef and break it up, then pour the beaten eggs over and stir until just set.',
   },
   {
@@ -75,6 +79,7 @@ export const MEALS: Meal[] = [
     cookware: 'stovetop',
     tags: ['comfort', 'batch cook'],
     ingredients: ['150g chicken breast, sliced', '3/4 cup rice', 'Ginger, garlic, onion', '1 boiled egg', 'Fish sauce, calamansi, spring onion'],
+    needs: ['Chicken breast', 'Eggs', 'Rice', 'Onion', 'Garlic', 'Ginger', 'Calamansi', 'Fish sauce (patis)'],
     method: 'Sauté ginger, garlic, onion. Add chicken and rice, then water, simmer 20 min until porridge-thick. Season with fish sauce, top with boiled egg and calamansi.',
     prepAhead: 'Makes 2 bowls. Keeps 3 days in the fridge, loosen with hot water when reheating.',
   },
@@ -89,6 +94,7 @@ export const MEALS: Meal[] = [
     cookware: 'stovetop',
     tags: ['classic', 'easy'],
     ingredients: ['3 eggs', '100g ground pork or chicken', 'Garlic, onion, tomato', '1 small potato, diced small', 'Salt and pepper'],
+    needs: ['Ground pork or chicken', 'Eggs', 'Tomato', 'Onion', 'Garlic', 'Potato'],
     method: 'Fry the diced potato until soft, add garlic, onion, tomato and the ground meat and brown it. Pour the beaten eggs over, cook low until set, then fold.',
   },
   {
@@ -102,6 +108,7 @@ export const MEALS: Meal[] = [
     cookware: 'stovetop',
     tags: ['sweet', 'pre-workout'],
     ingredients: ['1/2 cup glutinous rice or oats', '2 tbsp cocoa powder', '1 cup fresh milk', '1 scoop chocolate whey (optional)', '2 tbsp peanut butter'],
+    needs: ['Peanut butter', 'Fresh milk', 'Rolled oats', 'Rice'],
     method: 'Cook the rice or oats until thick, stir in cocoa and milk. Off the heat, stir through the whey and peanut butter so the protein does not curdle.',
   },
   {
@@ -115,6 +122,7 @@ export const MEALS: Meal[] = [
     cookware: 'stovetop',
     tags: ['fastest', 'budget'],
     ingredients: ['3 eggs', '1 tomato', '1 cup rice', 'Salt, pepper, a little oil'],
+    needs: ['Eggs', 'Rice', 'Tomato'],
     method: 'Soft-scramble the eggs, fold the chopped tomato in at the end so it stays fresh. Over rice.',
   },
   {
@@ -128,6 +136,7 @@ export const MEALS: Meal[] = [
     cookware: 'stovetop',
     tags: ['pre-workout', 'make ahead'],
     ingredients: ['1/2 cup rolled oats', '1 cup fresh milk', '1 saba banana, sliced', '1 tbsp peanut butter', 'Pinch of salt'],
+    needs: ['Peanut butter', 'Fresh milk', 'Rolled oats', 'Saba banana'],
     method: 'Simmer oats in milk 4 min. Top with saba and peanut butter. Eat 1 to 2 hours before a lower body session.',
   },
 
@@ -143,6 +152,7 @@ export const MEALS: Meal[] = [
     cookware: 'stovetop',
     tags: ['meal prep', 'freezer friendly'],
     ingredients: ['500g chicken breast, cubed', '1/3 cup soy sauce', '1/4 cup vinegar', '1 head garlic, crushed', 'Peppercorns, 3 bay leaves'],
+    needs: ['Chicken breast', 'Garlic', 'Soy sauce', 'Vinegar'],
     method: 'Marinate 30 min if you have time. Simmer everything 20 min, uncovered the last 5 so the sauce thickens. Do not boil hard or the breast goes dry.',
     prepAhead: 'Makes 3 to 4 portions. This is the backbone of the week — cook it Sunday.',
   },
@@ -157,6 +167,7 @@ export const MEALS: Meal[] = [
     cookware: 'stovetop',
     tags: ['budget', 'fibre', 'batch cook'],
     ingredients: ['1 cup mung beans (monggo)', '1 pack smoked fish flakes (tinapa) or 100g pork', 'Garlic, onion, tomato', 'Moringa or water spinach (kangkong)', 'Fish sauce'],
+    needs: ['Lean pork shoulder', 'Smoked fish flakes (tinapa)', 'Mung beans (monggo)', 'Water spinach (kangkong)', 'Moringa or pak choi (pechay)', 'Tomato', 'Onion', 'Garlic', 'Fish sauce (patis)'],
     method: 'Boil the mung beans 30 min until soft. Sauté garlic, onion, tomato, add the smoked fish, then the beans with their water. Simmer, stir in the greens at the very end.',
     prepAhead: 'Makes 4 portions and costs almost nothing. Freezes well.',
   },
@@ -171,6 +182,7 @@ export const MEALS: Meal[] = [
     cookware: 'stovetop',
     tags: ['packed lunch', 'fast'],
     ingredients: ['2 cans Century Tuna flakes', 'Garlic, onion, tomato', '1 carrot, diced small', 'Green peas', 'Fish sauce, pepper'],
+    needs: ['Century Tuna flakes in oil', 'Carrot, chayote, cabbage', 'Tomato', 'Onion', 'Garlic', 'Fish sauce (patis)'],
     method: 'Sauté aromatics, add carrot until just soft, then tuna and peas. Two minutes only, tuna is already cooked. Great baon over rice.',
   },
   {
@@ -184,6 +196,7 @@ export const MEALS: Meal[] = [
     cookware: 'stovetop',
     tags: ['soup', 'light'],
     ingredients: ['400g chicken (thigh and breast)', 'Ginger, garlic, onion', 'Green papaya or chayote', 'Moringa leaves (malunggay)', 'Fish sauce'],
+    needs: ['Chicken thigh (bone-in)', 'Moringa or pak choi (pechay)', 'Carrot, chayote, cabbage', 'Onion', 'Garlic', 'Ginger', 'Fish sauce (patis)'],
     method: 'Sauté ginger, garlic, onion, brown the chicken, add water and simmer 20 min. Add the papaya until tender, then the leaves off the heat.',
     prepAhead: 'Makes 3 portions.',
   },
@@ -198,6 +211,7 @@ export const MEALS: Meal[] = [
     cookware: 'stovetop',
     tags: ['iron rich', 'leg day'],
     ingredients: ['300g beef sirloin, thin sliced', '3 tbsp soy sauce', 'Calamansi or lime juice', '2 onions, in rings', 'Pepper'],
+    needs: ['Beef sirloin, sliced thin', 'Onion', 'Calamansi', 'Lemon', 'Soy sauce'],
     method: 'Marinate beef in soy, calamansi and pepper 30 min. Sear hard and fast, remove. Soften the onions in the pan, return the beef with the marinade, simmer 5 min.',
   },
   {
@@ -211,6 +225,7 @@ export const MEALS: Meal[] = [
     cookware: 'stovetop',
     tags: ['budget', 'omega 3'],
     ingredients: ['2 cans sardines in tomato sauce', '1 bundle water spinach (kangkong)', 'Garlic, onion', 'Long green chilli', 'Pepper'],
+    needs: ['Sardines in tomato sauce', 'Water spinach (kangkong)', 'Tomato', 'Onion', 'Garlic'],
     method: 'Sauté garlic and onion, add sardines and break them up gently. Add the stems first, then the leaves, cook until just wilted.',
   },
   {
@@ -224,6 +239,7 @@ export const MEALS: Meal[] = [
     cookware: 'stovetop',
     tags: ['meal prep', 'creamy'],
     ingredients: ['400g chicken', '1 pack curry powder', '1 can coconut milk', 'Potato, carrot, bell pepper', 'Garlic, onion, ginger'],
+    needs: ['Coconut milk', 'Carrot, chayote, cabbage', 'Bell pepper', 'Onion', 'Garlic', 'Ginger', 'Potato', 'Curry powder'],
     method: 'Sauté aromatics with curry powder, brown the chicken, add coconut milk and vegetables. Simmer 20 min until the potato is soft.',
     prepAhead: 'Makes 3 portions.',
   },
@@ -238,6 +254,7 @@ export const MEALS: Meal[] = [
     cookware: 'stovetop',
     tags: ['veg heavy', 'fibre'],
     ingredients: ['2 cans tuna or 150g pork', 'Squash, string beans, okra, green beans', 'Shrimp paste (bagoong)', 'Garlic, onion, tomato'],
+    needs: ['Lean pork shoulder', 'Century Tuna flakes in oil', 'Shrimp', 'String beans, okra, squash', 'Broccoli or green beans', 'Tomato', 'Onion', 'Garlic', 'Fish sauce (patis)'],
     method: 'Sauté garlic, onion, tomato with the shrimp paste. Add kalabasa first, then the rest, cover and steam in its own liquid 12 min. Fold in the tuna at the end.',
   },
 
@@ -253,6 +270,7 @@ export const MEALS: Meal[] = [
     cookware: 'stovetop',
     tags: ['omega 3', 'simple'],
     ingredients: ['1 boneless milkfish belly (bangus)', 'Salt and pepper', 'Calamansi', 'Tomato and onion salsa (ensalada)'],
+    needs: ['Milkfish belly (bangus), boneless', 'Tomato', 'Onion', 'Calamansi'],
     method: 'Dry the fish well, salt it, cook skin down in a hot dry non-stick pan 6 min, flip 3 min. Serve with the raw tomato-onion salsa and calamansi.',
   },
   {
@@ -266,6 +284,7 @@ export const MEALS: Meal[] = [
     cookware: 'stovetop',
     tags: ['soup', 'light dinner'],
     ingredients: ['300g shrimp', '1 sachet tamarind soup mix (sinigang)', 'Water spinach, string beans, radish', 'Tomato and onion', 'Long green chilli'],
+    needs: ['Shrimp', 'Water spinach (kangkong)', 'String beans, okra, squash', 'Carrot, chayote, cabbage', 'Tomato', 'Onion', 'Tamarind soup mix'],
     method: 'Boil tomato and onion, add the sinigang mix and vegetables hardest-first. Add shrimp last, they need 3 minutes only or they turn rubbery.',
   },
   {
@@ -279,6 +298,7 @@ export const MEALS: Meal[] = [
     cookware: 'stovetop',
     tags: ['high protein', 'meal prep'],
     ingredients: ['400g chicken thigh or breast', 'Calamansi, vinegar, lemongrass', 'Ginger, garlic', 'Annatto oil, salt'],
+    needs: ['Chicken thigh (bone-in)', 'Garlic', 'Ginger', 'Calamansi', 'Lemon', 'Vinegar'],
     method: 'Marinate 30 min in calamansi, vinegar, crushed lemongrass, ginger and garlic. Sear in a covered pan 8 min a side, basting with annatto oil.',
     prepAhead: 'Marinate Sunday, cook fresh in 15 min on the night.',
   },
@@ -293,6 +313,7 @@ export const MEALS: Meal[] = [
     cookware: 'stovetop',
     tags: ['creamy', 'budget'],
     ingredients: ['2 tilapia fillets', '1 can coconut milk', 'Ginger, garlic, onion', 'Moringa leaves (malunggay)', 'Long green chilli'],
+    needs: ['Coconut milk', 'Tilapia fillet', 'Moringa or pak choi (pechay)', 'Onion', 'Garlic', 'Ginger'],
     method: 'Simmer coconut milk with ginger, garlic and onion 5 min. Slide in the fish, cover, 8 min. Malunggay at the very end.',
   },
   {
@@ -306,6 +327,7 @@ export const MEALS: Meal[] = [
     cookware: 'stovetop',
     tags: ['batch cook', 'comfort'],
     ingredients: ['400g lean pork shoulder, trimmed', '1 sachet tamarind soup mix (sinigang)', 'Taro, radish, string beans, water spinach', 'Tomato, onion', 'Long green chilli'],
+    needs: ['Lean pork shoulder', 'Water spinach (kangkong)', 'String beans, okra, squash', 'Carrot, chayote, cabbage', 'Tomato', 'Onion', 'Tamarind soup mix'],
     method: 'Boil the pork 30 min until tender, skim the foam. Add tomato, onion and the mix, then vegetables hardest-first. Water spinach last.',
     prepAhead: 'Makes 3 to 4 portions. Better on day two.',
   },
@@ -320,6 +342,7 @@ export const MEALS: Meal[] = [
     cookware: 'stovetop',
     tags: ['veg heavy', 'one pan'],
     ingredients: ['250g chicken breast, sliced', 'Cabbage, carrot, chayote, green beans', 'Garlic, onion', 'Oyster sauce', 'Cornstarch slurry'],
+    needs: ['Chicken breast', 'Broccoli or green beans', 'Carrot, chayote, cabbage', 'Onion', 'Garlic', 'Oyster sauce'],
     method: 'Sear the chicken, remove. Stir fry the vegetables hard and fast so they stay crunchy, return the chicken, oyster sauce and a little slurry to gloss it.',
   },
   {
@@ -333,6 +356,7 @@ export const MEALS: Meal[] = [
     cookware: 'stovetop',
     tags: ['packed lunch', 'batch cook'],
     ingredients: ['300g ground pork or chicken', 'Potato and carrot, diced', 'Tomato sauce', 'Garlic, onion', 'Green peas, raisins optional'],
+    needs: ['Ground pork or chicken', 'Carrot, chayote, cabbage', 'Tomato', 'Onion', 'Garlic', 'Potato'],
     method: 'Brown the meat, sauté garlic and onion, add potato and carrot with the tomato sauce. Simmer 15 min until soft. Peas at the end.',
     prepAhead: 'Makes 3 portions and reheats perfectly for baon.',
   },
@@ -347,6 +371,7 @@ export const MEALS: Meal[] = [
     cookware: 'stovetop',
     tags: ['easy', 'budget'],
     ingredients: ['1 can sardines in tomato sauce, drained', '3 eggs', '1 small onion', 'Spring onion', 'Pepper'],
+    needs: ['Sardines in tomato sauce', 'Eggs', 'Tomato', 'Onion'],
     method: 'Fry the onion, add the drained sardines and break them up. Pour the beaten eggs over, cook low until set, then fold.',
   },
   // ---------------- Snacks ----------------
@@ -361,6 +386,7 @@ export const MEALS: Meal[] = [
     cookware: 'stovetop',
     tags: ['batch cook', 'budget'],
     ingredients: ['2 eggs', 'Rock salt'],
+    needs: ['Eggs'],
     method: 'Boil a dozen on Sunday, keep them in the fridge. Seven minutes gives a jammy yolk, ten gives firm.',
     prepAhead: 'Boil 12 at once on grocery day.',
   },
@@ -374,7 +400,8 @@ export const MEALS: Meal[] = [
     minutes: 3,
     cookware: 'no-cook',
     tags: ['no cook', 'office'],
-    ingredients: ['1 can Century Tuna flakes in oil', '4 Skyflakes crackers', 'Calamansi, pepper'],
+    ingredients: ['1 can Century Tuna flakes in oil', '4 crackers', 'Calamansi, pepper'],
+    needs: ['Century Tuna flakes in oil', 'Crackers', 'Calamansi'],
     method: 'Drain the tuna, squeeze calamansi in, spoon onto crackers.',
   },
   {
@@ -388,6 +415,7 @@ export const MEALS: Meal[] = [
     cookware: 'no-cook',
     tags: ['sweet fix', 'no cook'],
     ingredients: ['1 cup plain or Greek yogurt', '1 saba banana', '1 tbsp peanuts, crushed'],
+    needs: ['Plain or Greek yogurt', 'Mixed nuts', 'Saba banana'],
     method: 'Layer and eat. Plain yogurt has roughly double the protein of the sweetened flavoured tubs.',
   },
   {
@@ -401,6 +429,7 @@ export const MEALS: Meal[] = [
     cookware: 'no-cook',
     tags: ['post workout', 'fastest'],
     ingredients: ['1 scoop whey protein', '300ml water or fresh milk'],
+    needs: ['Fresh milk', 'Whey protein'],
     method: 'Shake. The cheapest way to close a 25g gap on a day the food did not add up.',
   },
   {
@@ -414,6 +443,7 @@ export const MEALS: Meal[] = [
     cookware: 'no-cook',
     tags: ['portable', 'uses leftovers'],
     ingredients: ['100g leftover cooked chicken, shredded', '2 slices wholemeal bread', '1 tbsp mayo or yogurt', 'Lettuce or cucumber'],
+    needs: ['Chicken breast', 'Plain or Greek yogurt', 'Wholemeal bread', 'Lettuce'],
     method: 'Shred yesterday\u2019s chicken, mix with a spoon of mayo or plain yogurt, and build the sandwich. The best use for leftover adobo or inasal.',
   },
   {
@@ -427,6 +457,7 @@ export const MEALS: Meal[] = [
     cookware: 'stovetop',
     tags: ['pre-workout', 'budget'],
     ingredients: ['1 medium sweet potato (kamote)', 'A handful of boiled peanuts'],
+    needs: ['Mixed nuts', 'Sweet potato'],
     method: 'Boil the sweet potato 15 min. Good slow carbs an hour before training.',
   },
   {
@@ -440,6 +471,7 @@ export const MEALS: Meal[] = [
     cookware: 'no-cook',
     tags: ['before bed', 'no cook'],
     ingredients: ['1 glass fresh milk', '1 boiled egg'],
+    needs: ['Eggs', 'Fresh milk'],
     method: 'The simplest protein top-up before sleep, and it costs about twenty pesos.',
   },
 
@@ -455,6 +487,7 @@ export const MEALS: Meal[] = [
     cookware: 'no-cook',
     tags: ['make ahead', 'no cook', 'fast'],
     ingredients: ['1/2 cup rolled oats', '1 scoop protein powder', '200ml milk', '1 tbsp peanut butter', '1 tbsp chia seeds', 'Banana or mango to top'],
+    needs: ['Peanut butter', 'Fresh milk', 'Whey protein', 'Rolled oats', 'Chia seeds'],
     method: 'Stir the oats, protein powder, milk and chia in a jar. Fridge overnight. Top with fruit and peanut butter in the morning. Make three jars at once on Sunday.',
     prepAhead: 'Three jars on Sunday covers half your breakfasts with zero morning cooking.',
   },
@@ -469,6 +502,7 @@ export const MEALS: Meal[] = [
     cookware: 'no-cook',
     tags: ['post workout', 'fastest', 'no cook'],
     ingredients: ['1 scoop protein powder', '1 banana', '1 tbsp peanut butter', '250ml milk', 'Ice'],
+    needs: ['Peanut butter', 'Fresh milk', 'Whey protein', 'Saba banana'],
     method: 'Blend. Best within an hour of finishing a session, and it doubles as breakfast on a rushed morning.',
   },
   {
@@ -482,6 +516,7 @@ export const MEALS: Meal[] = [
     cookware: 'stovetop',
     tags: ['fast', 'easy'],
     ingredients: ['3 eggs', '2 slices wholemeal bread', '1 cheese slice', 'Tomato and lettuce', 'Salt and pepper'],
+    needs: ['Eggs', 'Cheese slices or block', 'Wholemeal bread', 'Lettuce', 'Tomato'],
     method: 'Fry or scramble the eggs, melt the cheese over them in the pan, then build the sandwich with the salad.',
   },
   {
@@ -495,6 +530,7 @@ export const MEALS: Meal[] = [
     cookware: 'no-cook',
     tags: ['no cook', 'sweet fix'],
     ingredients: ['200g plain Greek yogurt', '3 tbsp granola', 'Mango, banana or berries', '1 tsp honey'],
+    needs: ['Plain or Greek yogurt', 'Granola', 'Saba banana'],
     method: 'Layer yogurt, fruit and granola. Plain yogurt has roughly double the protein of the sweetened cups.',
   },
   {
@@ -508,6 +544,7 @@ export const MEALS: Meal[] = [
     cookware: 'no-cook',
     tags: ['portable', 'uses leftovers', 'fast'],
     ingredients: ['150g cooked chicken, sliced', '1 large tortilla', 'Lettuce', '2 tbsp Greek yogurt mixed with a little mayo', 'Parmesan or cheese', 'Lemon, pepper'],
+    needs: ['Chicken breast', 'Plain or Greek yogurt', 'Cheese slices or block', 'Tortilla wraps', 'Lettuce', 'Lemon'],
     method: 'Toss the chicken and lettuce in the dressing, roll it tightly in the tortilla and slice on the diagonal. Perfect for leftover adobo or inasal chicken.',
   },
   {
@@ -521,6 +558,7 @@ export const MEALS: Meal[] = [
     cookware: 'stovetop',
     tags: ['meal prep', 'packed lunch'],
     ingredients: ['80g dry pasta', '1 can tuna in oil, drained', 'Sweetcorn, cucumber, tomato', '2 tbsp Greek yogurt or mayo', 'Lemon, salt, pepper'],
+    needs: ['Century Tuna flakes in oil', 'Plain or Greek yogurt', 'Sweetcorn', 'Pasta', 'Tomato', 'Lemon'],
     method: 'Boil the pasta, rinse it cold, then toss everything together. Keeps three days and is eaten cold, so no reheating needed.',
     prepAhead: 'Makes 2 portions.',
   },
@@ -535,6 +573,7 @@ export const MEALS: Meal[] = [
     cookware: 'stovetop',
     tags: ['uses leftovers', 'one pan', 'fast'],
     ingredients: ['150g chicken breast, diced', '1.5 cups day-old rice', '2 eggs', 'Carrot, peas, spring onion', 'Garlic, soy sauce, sesame oil'],
+    needs: ['Chicken breast', 'Eggs', 'Rice', 'Carrot, chayote, cabbage', 'Onion', 'Garlic', 'Soy sauce'],
     method: 'Scramble the eggs, set aside. Sear the chicken, add garlic and vegetables, then the cold rice and soy sauce. Fold the egg back in at the end. Day-old rice is the trick — fresh rice goes mushy.',
   },
   {
@@ -548,6 +587,7 @@ export const MEALS: Meal[] = [
     cookware: 'stovetop',
     tags: ['meal prep', 'balanced'],
     ingredients: ['150g chicken breast, diced', '1 cup rice', '1 can black or kidney beans, drained', 'Sweetcorn, tomato, onion', 'Paprika, cumin, lime', 'Cheese or yogurt to top'],
+    needs: ['Chicken breast', 'Black or kidney beans', 'Sweetcorn', 'Rice', 'Tomato', 'Onion', 'Lemon', 'Paprika and cumin'],
     method: 'Season and pan-fry the chicken with the spices. Build over rice with the beans, corn and a quick tomato-onion salsa. Squeeze lime over.',
     prepAhead: 'Cook double chicken and it is two lunches.',
   },
@@ -562,6 +602,7 @@ export const MEALS: Meal[] = [
     cookware: 'stovetop',
     tags: ['comfort', 'training day'],
     ingredients: ['150g chicken breast, diced', '80g dry pasta', '3 tbsp cream cheese', 'Spinach', 'Garlic', 'Parmesan, pepper'],
+    needs: ['Cream cheese', 'Chicken breast', 'Cheese slices or block', 'Pasta', 'Moringa or pak choi (pechay)', 'Garlic'],
     method: 'Cook the pasta, saving a cup of the water. Sear the chicken, add garlic, cream cheese and a splash of pasta water to make the sauce. Toss with the pasta and spinach.',
   },
   {
@@ -575,6 +616,7 @@ export const MEALS: Meal[] = [
     cookware: 'stovetop',
     tags: ['iron rich', 'one pan', 'fast'],
     ingredients: ['250g beef sirloin, thin sliced', 'Broccoli florets', 'Garlic, ginger', 'Soy sauce, oyster sauce, a little honey', 'Cornstarch slurry', 'Rice to serve'],
+    needs: ['Beef sirloin, sliced thin', 'Broccoli or green beans', 'Garlic', 'Ginger', 'Soy sauce', 'Oyster sauce'],
     method: 'Sear the beef hard and fast, remove it. Stir fry the broccoli with garlic and ginger, add the sauce, return the beef and thicken with a little slurry.',
   },
   {
@@ -588,6 +630,7 @@ export const MEALS: Meal[] = [
     cookware: 'stovetop',
     tags: ['light', 'one pan', 'omega 3'],
     ingredients: ['2 white fish fillets', 'Butter, garlic, parsley', 'Green beans and carrot', 'Lemon, salt, pepper'],
+    needs: ['Tilapia fillet', 'Broccoli or green beans', 'Carrot, chayote, cabbage', 'Garlic', 'Lemon'],
     method: 'Pan-sear the fish 4 minutes a side in butter, basting with the garlic. Steam or pan-cook the vegetables alongside. Squeeze lemon over both.',
   },
   {
@@ -601,6 +644,7 @@ export const MEALS: Meal[] = [
     cookware: 'stovetop',
     tags: ['fast', 'uses leftovers'],
     ingredients: ['150g cooked chicken, shredded', '2 tortillas', 'Cheese', 'Onion and bell pepper', 'Salsa or yogurt to dip'],
+    needs: ['Chicken breast', 'Cheese slices or block', 'Tortilla wraps', 'Bell pepper', 'Onion'],
     method: 'Fill one tortilla with chicken, cheese and softened onion and pepper, top with the second, and dry-fry in a pan 3 minutes a side until the cheese melts.',
   },
   {
@@ -614,6 +658,7 @@ export const MEALS: Meal[] = [
     cookware: 'no-cook',
     tags: ['no cook', 'office'],
     ingredients: ['2 cheese slices or a small block', '4 crackers', 'Cherry tomatoes'],
+    needs: ['Cheese slices or block', 'Crackers', 'Tomato'],
     method: 'Assemble. A quick 12g when the day is running short on protein.',
   },
   {
@@ -627,6 +672,7 @@ export const MEALS: Meal[] = [
     cookware: 'no-cook',
     tags: ['no cook', 'sweet fix'],
     ingredients: ['A small handful of mixed nuts', '2 squares dark chocolate'],
+    needs: ['Mixed nuts'],
     method: 'Portion it into a small bowl rather than eating from the bag, or the handful becomes three.',
   },
 ];
@@ -718,6 +764,7 @@ export const GROCERY_LIST: GrocerySection[] = [
       { name: 'Calamansi', qty: '¼ kg', price: 30 },
       { name: 'Saba banana', qty: '1 kg', price: 70, note: 'Pre-workout carbs and yogurt topping.' },
       { name: 'Sweet potato', qty: '½ kg', price: 45 },
+      { name: 'Potato', qty: '½ kg', price: 60 },
       { name: 'Broccoli or green beans', qty: '½ kg', price: 110 },
       { name: 'Lettuce', qty: '1 head', price: 60 },
       { name: 'Bell pepper', qty: '2 pcs', price: 50 },
@@ -742,7 +789,17 @@ export const GROCERY_LIST: GrocerySection[] = [
       { name: 'Curry powder', qty: '1 pack', price: 30 , staple: true },
       { name: 'Oyster sauce', qty: '1 bottle', price: 60 , staple: true },
       { name: 'Peanut butter', qty: '1 jar', price: 130 , staple: true },
-      { name: 'Skyflakes crackers', qty: '1 pack', price: 60 , staple: true },
+      { name: 'Crackers', qty: '1 pack', price: 60, staple: true },
+      { name: 'Pasta', qty: '500 g', price: 80, staple: true },
+      { name: 'Tortilla wraps', qty: '1 pack', price: 130 },
+      { name: 'Wholemeal bread', qty: '1 loaf', price: 95 },
+      { name: 'Granola', qty: '1 pack', price: 190, staple: true },
+      { name: 'Black or kidney beans', qty: '2 cans', price: 90 },
+      { name: 'Sweetcorn', qty: '2 cans', price: 70 },
+      { name: 'Cream cheese', qty: '1 tub', price: 110 },
+      { name: 'Mixed nuts', qty: '1 pack', price: 180, staple: true },
+      { name: 'Chia seeds', qty: '1 small pack', price: 150, staple: true },
+      { name: 'Paprika and cumin', qty: 'small packs', price: 60, staple: true },
       { name: 'Peppercorns and bay leaves', qty: 'small packs', price: 40 , staple: true },
     ],
   },
@@ -851,3 +908,87 @@ export const NUTRITION_NOTES = [
     body: 'Building glute muscle is easier at maintenance calories or a small surplus. Chronic under-eating is the most common reason a glute programme stops producing results.',
   },
 ];
+
+/* ------------------------------------------------------------------ *
+ * Basket: what you ticked, and what it lets you cook
+ * ------------------------------------------------------------------ */
+
+const allGroceryItems = (): GroceryItem[] => GROCERY_LIST.flatMap((s) => s.items);
+
+/** What the items you have actually ticked add up to. */
+export function basketTotal(checked: Record<string, boolean>): number {
+  return [...allGroceryItems(), ...OPTIONAL_ITEMS]
+    .filter((i) => checked[i.name])
+    .reduce((n, i) => n + i.price, 0);
+}
+
+export function basketCount(checked: Record<string, boolean>): number {
+  return [...allGroceryItems(), ...OPTIONAL_ITEMS].filter((i) => checked[i.name]).length;
+}
+
+/** Cost of the whole list, shown only as a reference point. */
+export function fullListTotal(): number {
+  return allGroceryItems().reduce((n, i) => n + i.price, 0);
+}
+
+export interface MealMatch {
+  meal: Meal;
+  missing: string[];
+}
+
+/**
+ * Staples and seasonings are assumed to be in the cupboard already, so a meal
+ * is not marked "missing garlic" when garlic is a permanent fixture. Only the
+ * things you would actually make a trip for count against a match.
+ */
+const ASSUMED_ON_HAND = new Set([
+  'Cooking oil',
+  'Peppercorns and bay leaves',
+  'Soy sauce',
+  'Vinegar',
+  'Fish sauce (patis)',
+  'Paprika and cumin',
+  'Curry powder',
+  'Oyster sauce',
+]);
+
+export interface BasketMeals {
+  ready: MealMatch[];
+  almost: MealMatch[];
+}
+
+/**
+ * Splits the library into what the basket already covers and what it nearly
+ * covers. "Almost" is capped at two missing items, past which it stops being
+ * a suggestion and starts being a different shopping trip.
+ */
+export function mealsFromBasket(checked: Record<string, boolean>, maxMissing = 2): BasketMeals {
+  const ready: MealMatch[] = [];
+  const almost: MealMatch[] = [];
+
+  for (const meal of MEALS) {
+    const required = meal.needs.filter((n) => !ASSUMED_ON_HAND.has(n));
+    if (required.length === 0) continue;
+    const missing = required.filter((n) => !checked[n]);
+    if (missing.length === 0) ready.push({ meal, missing });
+    else if (missing.length <= maxMissing) almost.push({ meal, missing });
+  }
+
+  ready.sort((a, b) => b.meal.protein - a.meal.protein);
+  almost.sort((a, b) => a.missing.length - b.missing.length || b.meal.protein - a.meal.protein);
+  return { ready, almost };
+}
+
+/** The single item that would unlock the most new meals, given the basket. */
+export function bestNextItem(checked: Record<string, boolean>): { name: string; unlocks: number } | null {
+  const counts = new Map<string, number>();
+  for (const { missing } of mealsFromBasket(checked).almost) {
+    if (missing.length !== 1) continue;
+    counts.set(missing[0], (counts.get(missing[0]) ?? 0) + 1);
+  }
+  let best: { name: string; unlocks: number } | null = null;
+  for (const [name, unlocks] of counts) {
+    if (!best || unlocks > best.unlocks) best = { name, unlocks };
+  }
+  return best;
+}

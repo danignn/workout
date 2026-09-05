@@ -60,12 +60,23 @@ export interface HabitDay {
   proteinHit: boolean;
 }
 
+export interface PeriodLog {
+  id: string;
+  /** YYYY-MM-DD of day 1. */
+  start: string;
+  /** Left open while the period is still running. */
+  end?: string;
+}
+
 export interface CycleSettings {
   enabled: boolean;
-  /** YYYY-MM-DD of the first day of the most recent period. */
+  /** Kept for state written before periods were logged individually. */
   lastPeriodStart?: string;
   cycleLength: number;
   periodLength: number;
+  logs: PeriodLog[];
+  /** Turns the lighter training suggestions on and off. */
+  adjustTraining: boolean;
 }
 
 export interface Profile {
@@ -136,16 +147,16 @@ export interface AppState {
   habits: Record<string, HabitDay>;
 }
 
-export const STATE_VERSION = 2;
+export const STATE_VERSION = 3;
 
 export const EMPTY_HABIT: HabitDay = { water: 0, steps: 0, sleepHours: 0, proteinHit: false };
 
 export function initialState(): AppState {
   return {
     version: STATE_VERSION,
-    profile: { name: '', bodyweightKg: 60, waterTarget: 8, stepTarget: 8000 },
+    profile: { name: '', bodyweightKg: 42, waterTarget: 8, stepTarget: 8000 },
     settings: { restPreference: 'min', vibrate: true, sound: true, autoStartRest: true },
-    cycle: { enabled: false, cycleLength: 28, periodLength: 5 },
+    cycle: { enabled: false, cycleLength: 28, periodLength: 5, logs: [], adjustTraining: true },
     schedule: { startDate: todayKey() },
     theme: { palette: 'blush', mascot: 'butterfly', mascotSpeed: 'normal' },
     media: {},

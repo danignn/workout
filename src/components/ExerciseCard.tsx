@@ -5,6 +5,7 @@ import type { LoggedSet, WorkoutLog } from '../store/types';
 import { useApp } from '../store/AppContext';
 import { useRestTimer } from './RestTimer';
 import { progressionAdvice } from '../utils/progression';
+import { adjustedLoad, trainingAdjustment } from '../utils/cycle';
 import { CheckIcon, ChevronDown, MinusIcon, PlusIcon, TimerIcon, TrophyIcon } from './Icons';
 import { VideoSheet, VideoButton, type PlayRequest } from './VideoSheet';
 import { parseVideoUrl, tiktokSource, tiktokSearchUrl, youtubeSearchUrl } from '../utils/media';
@@ -85,6 +86,13 @@ export function ExerciseCard({ exercise, index, log, defaultOpen }: Props) {
   const advice = progressionAdvice(exercise, state.workouts.filter((w) => w.id !== log.id));
   const betweenSets = exercise.restBetweenSets ?? REST_RULES[exercise.tier].betweenSets;
 
+  // On the first days of a period the heavy lifts get a lighter suggestion.
+  const adjustment = trainingAdjustment(state.cycle, log.date);
+  const eased =
+    adjustment && adjustment.loadFactor < 1 && exercise.tier === 'compound' && exercise.suggestedKg > 0
+      ? adjustedLoad(advice.suggestedWeight ?? exercise.suggestedKg, adjustment.loadFactor)
+      : null;
+
   const toggleDone = (i: number) => {
     const wasDone = sets[i]?.done;
     const patch: Partial<LoggedSet> = { done: !wasDone };
@@ -122,6 +130,16 @@ export function ExerciseCard({ exercise, index, log, defaultOpen }: Props) {
 
       {open && (
         <div className="exercise-body stack">
+          {eased !== null && (
+            <div className="card card-flat card-tight row" style={{ gap: 10, alignItems: 'flex-start' }}>
+              <span style={{ flexShrink: 0, marginTop: 1 }}>🌙</span>
+              <span className="small muted">
+                Day {adjustment?.day} of your period. Try <strong>{eased}kg</strong> today and keep the reps the same.
+                Going lighter here is not lost progress.
+              </span>
+            </div>
+          )}
+
           {advice.level !== 'none' && (
             <div className="card card-flat card-tight row" style={{ gap: 10, alignItems: 'flex-start' }}>
               <span style={{ color: advice.level === 'add-weight' ? 'var(--peach)' : 'var(--pink-500)', flexShrink: 0, marginTop: 1 }}>

@@ -8,9 +8,11 @@ import {
   OPTIONAL_ITEMS,
   PRICE_NOTE,
   SUNDAY_PREP,
-  firstShopTotal,
-  stapleTotal,
-  weeklyTotal,
+  basketCount,
+  basketTotal,
+  bestNextItem,
+  fullListTotal,
+  mealsFromBasket,
   proteinTargetFor,
   type Cuisine,
   type Meal,
@@ -44,10 +46,10 @@ export function MealsScreen() {
     () => MEALS.filter((m) => m.category === category && (cuisine === 'all' || m.cuisine === cuisine)),
     [category, cuisine],
   );
-  const weekly = weeklyTotal();
-  const firstShop = firstShopTotal();
-  const checkedCount = GROCERY_LIST.flatMap((s) => s.items).filter((i) => state.grocery[i.name]).length;
-  const itemCount = GROCERY_LIST.reduce((n, s) => n + s.items.length, 0);
+  const basket = basketTotal(state.grocery);
+  const picked = basketCount(state.grocery);
+  const { ready, almost } = useMemo(() => mealsFromBasket(state.grocery), [state.grocery]);
+  const nextItem = useMemo(() => bestNextItem(state.grocery), [state.grocery]);
 
   const logMeal = (meal: Meal) => {
     addMealLog(today, { mealId: meal.id, name: meal.name, protein: meal.protein, slot: meal.category });
@@ -166,31 +168,71 @@ export function MealsScreen() {
             <div className="card">
               <div className="row-between">
                 <span className="grow">
-                  <span className="bold" style={{ display: 'block' }}>Sunday grocery run</span>
-                  <span className="tiny muted">{checkedCount} of {itemCount} items · about {peso(weekly)} a week</span>
+                  <span className="bold" style={{ display: 'block' }}>Your basket</span>
+                  <span className="tiny muted">
+                    {picked === 0 ? 'Tick what you actually want this week' : `${picked} ${picked === 1 ? 'item' : 'items'} picked`}
+                  </span>
                 </span>
-                <button className="btn btn-soft btn-sm" onClick={resetGrocery}>Reset</button>
+                <span style={{ textAlign: 'right' }}>
+                  <span className="bold num" style={{ fontSize: 22, color: 'var(--pink-600)', display: 'block' }}>
+                    {peso(basket)}
+                  </span>
+                </span>
               </div>
-              <div className="bar-track" style={{ marginTop: 10 }}>
-                <div className="bar-fill" style={{ width: `${itemCount ? (checkedCount / itemCount) * 100 : 0}%` }} />
-              </div>
+              {picked > 0 && (
+                <button className="btn btn-soft btn-sm" style={{ marginTop: 10 }} onClick={resetGrocery}>
+                  Clear basket
+                </button>
+              )}
+              <p className="tiny faint" style={{ marginTop: 10 }}>
+                Nothing is pre-selected. Buy as much or as little as you want — the total is only what you tick.
+                The whole list would come to {peso(fullListTotal())}, but there is no reason to buy it all.
+              </p>
             </div>
 
-            <div className="card card-flat stack-sm">
-              <div className="row-between">
-                <span className="small">Fresh food, every week</span>
-                <span className="small bold num">{peso(weekly)}</span>
+            {picked > 0 && (
+              <div className="card">
+                <div className="section-title" style={{ margin: '0 0 6px' }}>What you can cook</div>
+                {ready.length === 0 && almost.length === 0 && (
+                  <p className="small muted">Nothing matches yet. Add a protein and a vegetable and this fills up fast.</p>
+                )}
+                {ready.length > 0 && (
+                  <>
+                    <p className="small bold" style={{ marginBottom: 4 }}>Ready to make now ({ready.length})</p>
+                    {ready.slice(0, 8).map(({ meal }) => (
+                      <button key={meal.id} className="grocery-item basket-meal" onClick={() => setDetail(meal)}>
+                        <span className="grocery-check" style={{ background: 'var(--pink-500)', borderColor: 'var(--pink-500)', color: '#fff' }}>
+                          <CheckIcon size={15} />
+                        </span>
+                        <span className="grow">
+                          <span className="small bold" style={{ display: 'block' }}>{meal.name}</span>
+                          <span className="tiny faint">{meal.minutes} min · {meal.protein}g protein</span>
+                        </span>
+                      </button>
+                    ))}
+                  </>
+                )}
+                {almost.length > 0 && (
+                  <>
+                    <p className="small bold" style={{ margin: '12px 0 4px' }}>Almost — just need one or two more</p>
+                    {almost.slice(0, 6).map(({ meal, missing }) => (
+                      <button key={meal.id} className="grocery-item basket-meal" onClick={() => setDetail(meal)}>
+                        <span className="grocery-check" />
+                        <span className="grow">
+                          <span className="small bold" style={{ display: 'block' }}>{meal.name}</span>
+                          <span className="tiny faint">needs {missing.join(' + ')}</span>
+                        </span>
+                      </button>
+                    ))}
+                  </>
+                )}
+                {nextItem && (
+                  <p className="tiny" style={{ marginTop: 10, color: 'var(--pink-700)', fontWeight: 600 }}>
+                    Adding {nextItem.name} would unlock {nextItem.unlocks} more {nextItem.unlocks === 1 ? 'meal' : 'meals'}.
+                  </p>
+                )}
               </div>
-              <div className="row-between">
-                <span className="small muted">Pantry staples, first shop only</span>
-                <span className="small muted num">{peso(stapleTotal())}</span>
-              </div>
-              <div className="divider" style={{ margin: '2px 0' }} />
-              <div className="row-between">
-                <span className="small bold">First shop, buying everything</span>
-                <span className="small bold num">{peso(firstShop)}</span>
-              </div>
-            </div>
+            )}
 
             <div className="card card-flat card-tight row" style={{ gap: 10, alignItems: 'flex-start' }}>
               <span style={{ color: 'var(--pink-500)', flexShrink: 0, marginTop: 1 }}><InfoIcon size={16} /></span>
@@ -201,7 +243,9 @@ export function MealsScreen() {
               <div key={section.id} className="card">
                 <div className="row-between" style={{ marginBottom: 4 }}>
                   <span className="bold small">{section.emoji} {section.label}</span>
-                  <span className="pill pill-outline">{peso(section.items.reduce((n, i) => n + i.price, 0))}</span>
+                  <span className="pill pill-outline">
+                    {peso(section.items.filter((i) => state.grocery[i.name]).reduce((n, i) => n + i.price, 0))}
+                  </span>
                 </div>
                 <p className="tiny faint" style={{ marginBottom: 4 }}>{section.aisle}</p>
                 {section.items.map((item) => {

@@ -10,6 +10,7 @@ import { PlanScreen } from './screens/PlanScreen';
 import { WorkoutScreen } from './screens/WorkoutScreen';
 import { ProgressScreen } from './screens/ProgressScreen';
 import { MealsScreen } from './screens/MealsScreen';
+import { CycleScreen } from './screens/CycleScreen';
 import { MeScreen } from './screens/MeScreen';
 
 function ScrollToTop() {
@@ -34,6 +35,7 @@ export default function App() {
               <Route path="/workout/:sessionId" element={<WorkoutScreen />} />
               <Route path="/progress" element={<ProgressScreen />} />
               <Route path="/meals" element={<MealsScreen />} />
+              <Route path="/cycle" element={<CycleScreen />} />
               <Route path="/me" element={<MeScreen />} />
               <Route path="*" element={<TodayScreen />} />
             </Routes>

@@ -29,6 +29,9 @@ interface AppContextValue {
   updateProfile: (patch: Partial<Profile>) => void;
   updateSettings: (patch: Partial<Settings>) => void;
   updateCycle: (patch: Partial<CycleSettings>) => void;
+  startPeriod: (date: string) => void;
+  endPeriod: (date: string) => void;
+  deletePeriod: (id: string) => void;
   updateSchedule: (patch: Partial<ScheduleSettings>) => void;
   updateTheme: (patch: Partial<ThemeSettings>) => void;
   setMedia: (exerciseId: string, patch: Partial<ExerciseMedia>) => void;
@@ -88,6 +91,40 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const updateCycle = useCallback((patch: Partial<CycleSettings>) => {
     setState((s) => ({ ...s, cycle: { ...s.cycle, ...patch } }));
+  }, []);
+
+  const startPeriod = useCallback((date: string) => {
+    setState((s) => {
+      const logs = s.cycle.logs ?? [];
+      if (logs.some((l) => l.start === date)) return s;
+      // Close anything still open before starting a new one.
+      const closed = logs.map((l) => (l.end ? l : { ...l, end: date }));
+      return {
+        ...s,
+        cycle: {
+          ...s.cycle,
+          enabled: true,
+          lastPeriodStart: date,
+          logs: [...closed, { id: uid(), start: date }],
+        },
+      };
+    });
+  }, []);
+
+  const endPeriod = useCallback((date: string) => {
+    setState((s) => {
+      const logs = s.cycle.logs ?? [];
+      const open = [...logs].sort((a, b) => b.start.localeCompare(a.start)).find((l) => !l.end);
+      if (!open) return s;
+      return {
+        ...s,
+        cycle: { ...s.cycle, logs: logs.map((l) => (l.id === open.id ? { ...l, end: date } : l)) },
+      };
+    });
+  }, []);
+
+  const deletePeriod = useCallback((id: string) => {
+    setState((s) => ({ ...s, cycle: { ...s.cycle, logs: (s.cycle.logs ?? []).filter((l) => l.id !== id) } }));
   }, []);
 
   const updateSchedule = useCallback((patch: Partial<ScheduleSettings>) => {
@@ -268,6 +305,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       updateProfile,
       updateSettings,
       updateCycle,
+      startPeriod,
+      endPeriod,
+      deletePeriod,
       updateSchedule,
       updateTheme,
       setMedia,
@@ -298,6 +338,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       updateProfile,
       updateSettings,
       updateCycle,
+      startPeriod,
+      endPeriod,
+      deletePeriod,
       updateSchedule,
       updateTheme,
       setMedia,
