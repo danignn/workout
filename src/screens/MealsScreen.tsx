@@ -12,6 +12,7 @@ import {
   stapleTotal,
   weeklyTotal,
   proteinTargetFor,
+  type Cuisine,
   type Meal,
   type MealCategory,
 } from '../data/meals';
@@ -28,6 +29,7 @@ export function MealsScreen() {
   const { state, addMealLog, removeMealLog, updateHabit, toggleGrocery, resetGrocery } = useApp();
   const [tab, setTab] = useState<Tab>('ideas');
   const [category, setCategory] = useState<MealCategory>('breakfast');
+  const [cuisine, setCuisine] = useState<Cuisine | 'all'>('all');
   const [detail, setDetail] = useState<Meal | null>(null);
   const [customOpen, setCustomOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -38,7 +40,10 @@ export function MealsScreen() {
   const target = state.profile.proteinTargetOverride ?? proteinTargetFor(state.profile.bodyweightKg);
   const pct = Math.min(100, Math.round((proteinLogged / target) * 100));
 
-  const filtered = useMemo(() => MEALS.filter((m) => m.category === category), [category]);
+  const filtered = useMemo(
+    () => MEALS.filter((m) => m.category === category && (cuisine === 'all' || m.cuisine === cuisine)),
+    [category, cuisine],
+  );
   const weekly = weeklyTotal();
   const firstShop = firstShopTotal();
   const checkedCount = GROCERY_LIST.flatMap((s) => s.items).filter((i) => state.grocery[i.name]).length;
@@ -56,7 +61,7 @@ export function MealsScreen() {
       <div className="page-header">
         <div className="eyebrow">Fuel the growth</div>
         <h1>Meals</h1>
-        <p className="sub">Filipino food, stovetop and rice cooker only. No oven, no tofu. Aim for {target}g of protein a day.</p>
+        <p className="sub">Filipino and everything else, stovetop and rice cooker only. No oven, no tofu, no eggplant. Aim for {target}g of protein a day.</p>
       </div>
 
       <div className="page stack">
@@ -87,6 +92,15 @@ export function MealsScreen() {
                   {c.emoji} {c.label}
                 </button>
               ))}
+            </div>
+            <div className="chip-row">
+              {([['all', 'Everything'], ['filipino', 'Filipino'], ['international', 'Everything else']] as [Cuisine | 'all', string][]).map(
+                ([id, label]) => (
+                  <button key={id} className={`chip${cuisine === id ? ' active' : ''}`} onClick={() => setCuisine(id)}>
+                    {label}
+                  </button>
+                ),
+              )}
             </div>
             {filtered.map((meal) => (
               <button key={meal.id} className="card row" style={{ gap: 12, textAlign: 'left' }} onClick={() => setDetail(meal)}>
