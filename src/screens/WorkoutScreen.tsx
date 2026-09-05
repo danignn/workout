@@ -4,6 +4,8 @@ import { getSession, PROGRAM_META, type MobilityMove } from '../data/program';
 import { useApp } from '../store/AppContext';
 import { ExerciseCard } from '../components/ExerciseCard';
 import { CheckIcon, ChevronDown, ChevronLeft, InfoIcon } from '../components/Icons';
+import { VideoSheet, VideoButton, type PlayRequest } from '../components/VideoSheet';
+import { parseVideoUrl } from '../utils/media';
 import { formatLong, todayKey } from '../utils/date';
 import { setsCompleted, volumeOf } from '../utils/stats';
 
@@ -11,11 +13,15 @@ function MobilityBlock({
   title,
   blurb,
   moves,
+  video,
+  onPlay,
   defaultOpen,
 }: {
   title: string;
   blurb: string;
   moves: MobilityMove[];
+  video?: string;
+  onPlay: (r: PlayRequest) => void;
   defaultOpen: boolean;
 }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -33,6 +39,18 @@ function MobilityBlock({
       {open && (
         <div className="exercise-body">
           <p className="small muted" style={{ marginBottom: 6 }}>{blurb}</p>
+          {video && (
+            <div style={{ marginBottom: 10 }}>
+              <VideoButton
+                title={`Follow along: ${title.toLowerCase()}`}
+                subtitle="Tap to play the video"
+                onPlay={() => {
+                  const source = parseVideoUrl(video);
+                  if (source) onPlay({ title, subtitle: 'Follow-along video', source });
+                }}
+              />
+            </div>
+          )}
           {moves.map((m) => (
             <div className="mobility-item" key={m.name + m.prescription}>
               <span className="mobility-dot" />
@@ -56,6 +74,7 @@ export function WorkoutScreen() {
   const date = params.get('date') ?? todayKey();
   const navigate = useNavigate();
   const { ensureLog, getLog, setLogNotes, toggleWorkoutComplete } = useApp();
+  const [playing, setPlaying] = useState<PlayRequest | null>(null);
 
   const session = getSession(sessionId);
 
@@ -107,11 +126,22 @@ export function WorkoutScreen() {
           </div>
         )}
 
+        {session.optional && (
+          <div className="card card-flat card-tight row" style={{ gap: 10, alignItems: 'flex-start' }}>
+            <span style={{ color: 'var(--mint)', flexShrink: 0, marginTop: 1 }}><InfoIcon size={16} /></span>
+            <span className="small muted">
+              Optional session. Skipping it and taking the rest day instead still counts as following the plan.
+            </span>
+          </div>
+        )}
+
         <div className="section-title">Warm-up first</div>
         <MobilityBlock
           title="Warm-up"
           blurb="Do this before your first working set. It is what makes set one feel like set three instead of a warm-up in disguise."
           moves={session.warmup}
+          video={session.warmupVideo}
+          onPlay={setPlaying}
           defaultOpen={totals.done === 0}
         />
 
@@ -145,6 +175,8 @@ export function WorkoutScreen() {
           title="Cool-down stretches"
           blurb="Five minutes here is what stops you walking down stairs sideways tomorrow. Breathe out into each stretch, never bounce."
           moves={session.cooldown}
+          video={session.cooldownVideo}
+          onPlay={setPlaying}
           defaultOpen={allSetsDone}
         />
 
@@ -178,6 +210,8 @@ export function WorkoutScreen() {
           </p>
         )}
       </div>
+
+      <VideoSheet request={playing} onClose={() => setPlaying(null)} />
     </>
   );
 }

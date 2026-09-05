@@ -75,11 +75,16 @@ export interface Session {
   dayOffset: number;
   title: string;
   subtitle: string;
-  kind: 'lower' | 'upper' | 'full' | 'rest';
+  kind: 'lower' | 'upper' | 'full' | 'core' | 'rest';
   accent: string;
   intro?: string;
+  /** True for a session you can skip and still be following the plan. */
+  optional?: boolean;
   warmup: MobilityMove[];
+  /** Follow-along warm-up video, played on tap. */
+  warmupVideo?: string;
   cooldown: MobilityMove[];
+  cooldownVideo?: string;
   exercises: Exercise[];
   finisher?: string;
 }
@@ -89,6 +94,14 @@ export interface Session {
  * and leg swings after, which is what makes the first working set feel like the
  * third one instead of a warm-up in disguise.
  */
+/** Follow-along warm-up and cool-down videos, supplied by Dani. */
+export const LEG_WARMUP_VIDEO = 'https://vt.tiktok.com/ZSqF6YXto/';
+export const UPPER_WARMUP_VIDEO = 'https://vt.tiktok.com/ZSqFjAVco/';
+export const FULL_WARMUP_VIDEO = 'https://vt.tiktok.com/ZSqF6MCUK/';
+export const LEG_COOLDOWN_VIDEO = 'https://vt.tiktok.com/ZSqF6kvWQ/';
+export const UPPER_COOLDOWN_VIDEO = 'https://vt.tiktok.com/ZSqF6qfPm/';
+export const FULL_COOLDOWN_VIDEO = 'https://vt.tiktok.com/ZSqF6npSK/';
+
 const GLUTE_WARMUP: MobilityMove[] = [
   { name: 'Incline walk or march on the spot', prescription: '5 min', note: 'Just enough to feel warm and breathe a little harder. Do not skip this to save time.' },
   { name: 'Bodyweight glute bridges', prescription: '10 reps', note: 'Squeeze at the top. This is the wake-up call for the muscle you are about to train.' },
@@ -145,7 +158,9 @@ export const SESSIONS: Session[] = [
     kind: 'lower',
     accent: '#f48fb1',
     warmup: GLUTE_WARMUP,
+    warmupVideo: LEG_WARMUP_VIDEO,
     cooldown: LOWER_COOLDOWN,
+    cooldownVideo: LEG_COOLDOWN_VIDEO,
     exercises: [
       {
         id: 'barbell-squat',
@@ -186,6 +201,28 @@ export const SESSIONS: Session[] = [
           'Spine stays straight throughout, drive through the hips. Form over weight.',
         ],
         videos: [VIDEOS.hipThrustTutorial, VIDEOS.hipThrustFormTips, VIDEOS.singleLegHipThrust],
+      },
+      {
+        id: 'leg-press',
+        name: 'Leg Press, glute-biased',
+        sets: 3,
+        repsLabel: '12',
+        repTarget: 12,
+        suggestedKg: 40,
+        loadNote: 'Start light and find your foot position first',
+        tier: 'compound',
+        restBetweenSets: [120, 180],
+        restBeforeNext: [120, 180],
+        cueSource: 'Bret Contreras',
+        cues: [
+          'Place your feet HIGH and NARROW on the platform. That is what shifts the work from quads to glutes.',
+          'You have found your position when your knees form roughly a 90 degree angle at the bottom.',
+          'Feet low on the platform turns this into a quad exercise, which is what you are trying to avoid.',
+          'Push through your heels, not your toes. Do not let your lower back round off the pad at the bottom.',
+          'Never lock the knees out hard at the top.',
+        ],
+        notes:
+          'High and narrow biases the glutes but does not switch the quads off — both work, you are just changing which one leads.',
       },
       {
         id: 'reverse-lunge',
@@ -252,7 +289,9 @@ export const SESSIONS: Session[] = [
     kind: 'upper',
     accent: '#c8a2e0',
     warmup: UPPER_WARMUP,
+    warmupVideo: UPPER_WARMUP_VIDEO,
     cooldown: UPPER_COOLDOWN,
+    cooldownVideo: UPPER_COOLDOWN_VIDEO,
     intro:
       'Keep loads light and reps moderate. This session is for posture, shoulder shape and the hourglass line, not size.',
     exercises: [
@@ -309,6 +348,52 @@ export const SESSIONS: Session[] = [
         ],
       },
       {
+        id: 'face-pull',
+        name: 'Cable Face Pull',
+        sets: 3,
+        repsLabel: '15',
+        repTarget: 15,
+        suggestedKg: 10,
+        tier: 'isolation',
+        restBetweenSets: [45, 60],
+        restBeforeNext: [120, 120],
+        cues: [
+          'Rope at face height, pull toward your forehead and pull the rope apart at the end.',
+          'This hits the rear shoulder, which is the half everyone misses and the half that makes shoulders look round from the side.',
+          'Light weight. If your neck is doing the work, it is too heavy.',
+        ],
+      },
+      {
+        id: 'bicep-curl',
+        name: 'Dumbbell Bicep Curl',
+        sets: 3,
+        repsLabel: '12',
+        repTarget: 12,
+        suggestedKg: 4,
+        tier: 'isolation',
+        restBetweenSets: [45, 60],
+        restBeforeNext: [120, 120],
+        cues: [
+          'Elbows pinned to your sides, no swinging the weight up with your back.',
+          'Lower slowly, that half of the rep is where the shape comes from.',
+        ],
+      },
+      {
+        id: 'tricep-pushdown',
+        name: 'Cable Tricep Pushdown',
+        sets: 3,
+        repsLabel: '15',
+        repTarget: 15,
+        suggestedKg: 10,
+        tier: 'isolation',
+        restBetweenSets: [45, 60],
+        restBeforeNext: [120, 120],
+        cues: [
+          'Elbows locked at your ribs, only the forearms move.',
+          'This is the back of the arm, the part that gives the toned look when you raise your arm.',
+        ],
+      },
+      {
         id: 'plank',
         name: 'Plank',
         sets: 3,
@@ -336,6 +421,124 @@ export const SESSIONS: Session[] = [
       "Shy girl alternative (Vera's cable-only upper): if free weights feel intimidating, swap the whole session for lat pulldown, straight-arm cable pulldown, cable bicep curl, half-kneeling single-arm lat pulldown, lateral raises. Same rest times apply.",
   },
   {
+    id: 'core-cardio',
+    dayOffset: 2,
+    title: 'Core + Cardio',
+    subtitle: 'Abs, waist and conditioning',
+    kind: 'core',
+    accent: '#8fd6bd',
+    optional: true,
+    intro:
+      'This is the day you asked for. Abs respond to load and progression like every other muscle, so most of this is weighted in the 10 to 20 rep range rather than endless bodyweight crunches. It puts no load through your legs, so it sits safely between your two lower body days. If you are tired or sore, walk instead and take the rest — this session is optional by design.',
+    warmup: FULL_WARMUP,
+    warmupVideo: FULL_WARMUP_VIDEO,
+    cooldown: FULL_COOLDOWN,
+    cooldownVideo: FULL_COOLDOWN_VIDEO,
+    exercises: [
+      {
+        id: 'cable-crunch',
+        name: 'Cable Crunch',
+        sets: 3,
+        repsLabel: '12 to 15',
+        repTarget: 15,
+        suggestedKg: 15,
+        tier: 'accessory',
+        restBetweenSets: [60, 90],
+        restBeforeNext: [120, 120],
+        cues: [
+          'Kneel facing the machine, rope beside your head, hips stay still.',
+          'Curl your ribs down toward your hips. The movement is your spine flexing, not your hips folding.',
+          'This is the main ab builder of the session, so this is the one to add weight to over time.',
+        ],
+        notes: 'Weighted work in this rep range is what actually thickens the abdominal muscle.',
+      },
+      {
+        id: 'hanging-knee-raise',
+        name: 'Hanging Knee Raise',
+        sets: 3,
+        repsLabel: '10 to 15',
+        repTarget: 15,
+        suggestedKg: 0,
+        loadNote: 'Bodyweight, or captain\u2019s chair',
+        tier: 'accessory',
+        restBetweenSets: [60, 90],
+        restBeforeNext: [120, 120],
+        cues: [
+          'Curl your pelvis up toward your ribs at the top rather than just lifting the knees.',
+          'No swinging. If you are swinging, do them on the captain\u2019s chair instead.',
+          'This hits the lower abs, the part that is hardest to reach with crunches.',
+        ],
+      },
+      {
+        id: 'pallof-press',
+        name: 'Pallof Press',
+        sets: 3,
+        repsLabel: '12 each side',
+        repTarget: 12,
+        suggestedKg: 10,
+        perSide: true,
+        tier: 'accessory',
+        restBetweenSets: [45, 60],
+        restBeforeNext: [120, 120],
+        cues: [
+          'Stand side-on to the cable, press it straight out from your chest and resist the twist.',
+          'Nothing moves except your arms. The work is in refusing to rotate.',
+          'This trains the deep core that holds your waist in, which crunches do not.',
+        ],
+      },
+      {
+        id: 'weighted-side-bend',
+        name: 'Suitcase Carry',
+        sets: 3,
+        repsLabel: '30 sec each side',
+        repTarget: 30,
+        suggestedKg: 12,
+        perSide: true,
+        timeBased: true,
+        tier: 'accessory',
+        restBetweenSets: [45, 60],
+        restBeforeNext: [120, 120],
+        cues: [
+          'One heavy dumbbell in one hand, walk tall and do not let your body tip toward it.',
+          'Deliberately not a weighted side bend: loaded side bends thicken the obliques, which widens the waist. Carries train the same muscles to hold you upright without building them outward.',
+        ],
+        notes: 'Chosen specifically to protect the hourglass line rather than square it off.',
+      },
+      {
+        id: 'dead-bug-core',
+        name: 'Dead Bug',
+        sets: 3,
+        repsLabel: '12 each side',
+        repTarget: 12,
+        perSide: true,
+        suggestedKg: 0,
+        tier: 'isolation',
+        restBetweenSets: [45, 60],
+        restBeforeNext: [120, 120],
+        cues: [
+          'Lower back pressed flat into the floor the whole time. Move slowly.',
+          'If your back lifts off the floor, shorten the range until it does not.',
+        ],
+      },
+      {
+        id: 'core-cardio-walk',
+        name: 'Incline Walk',
+        sets: 1,
+        repsLabel: '25 to 35 min',
+        repTarget: 30,
+        suggestedKg: 0,
+        timeBased: true,
+        tier: 'isolation',
+        cues: [
+          'Steep incline, brisk but conversational. No running needed.',
+          'This is the part that actually uncovers the abs, not the crunches above.',
+        ],
+      },
+    ],
+    finisher:
+      'Honest note: this session builds the muscle. Whether it becomes visible is decided by body fat, which comes from food, sleep and daily steps. Doing this three times a week will not out-train a calorie surplus, and no amount of core work burns fat off your stomach specifically.',
+  },
+  {
     id: 'lower-b',
     dayOffset: 3,
     title: 'Lower B',
@@ -343,7 +546,9 @@ export const SESSIONS: Session[] = [
     kind: 'lower',
     accent: '#f48fb1',
     warmup: GLUTE_WARMUP,
+    warmupVideo: LEG_WARMUP_VIDEO,
     cooldown: LOWER_COOLDOWN,
+    cooldownVideo: LEG_COOLDOWN_VIDEO,
     exercises: [
       {
         id: 'db-rdl',
@@ -445,7 +650,9 @@ export const SESSIONS: Session[] = [
     kind: 'full',
     accent: '#f6b3a0',
     warmup: FULL_WARMUP,
+    warmupVideo: FULL_WARMUP_VIDEO,
     cooldown: FULL_COOLDOWN,
+    cooldownVideo: FULL_COOLDOWN_VIDEO,
     exercises: [
       {
         id: 'hip-thrust-fb',
@@ -563,7 +770,6 @@ export interface RestDay {
 }
 
 export const REST_DAYS: RestDay[] = [
-  { dayOffset: 2, label: 'Rest or walk', note: 'A gentle walk is perfect. Nothing that fatigues the legs.' },
   { dayOffset: 4, label: 'Rest', note: 'Full rest before your full body day. Recovery is where the growth happens.' },
   { dayOffset: 6, label: 'Rest', note: 'Reset for the week. Sleep and food do the work today.' },
 ];

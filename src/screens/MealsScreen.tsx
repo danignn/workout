@@ -56,7 +56,7 @@ export function MealsScreen() {
       <div className="page-header">
         <div className="eyebrow">Fuel the growth</div>
         <h1>Meals</h1>
-        <p className="sub">Filipino food, stovetop and rice cooker only. Aim for {target}g of protein a day.</p>
+        <p className="sub">Filipino food, stovetop and rice cooker only. No oven, no tofu. Aim for {target}g of protein a day.</p>
       </div>
 
       <div className="page stack">
@@ -69,7 +69,7 @@ export function MealsScreen() {
           <p className="tiny faint" style={{ marginTop: 8 }}>
             {proteinLogged >= target
               ? 'Target hit. That is the single most important nutrition box for glute growth.'
-              : `${target - proteinLogged}g to go. Roughly ${Math.ceil((target - proteinLogged) / 25)} more protein-led ${Math.ceil((target - proteinLogged) / 25) === 1 ? 'meal or meryenda' : 'meals or meryenda'}.`}
+              : `${target - proteinLogged}g to go. Roughly ${Math.ceil((target - proteinLogged) / 25)} more protein-led ${Math.ceil((target - proteinLogged) / 25) === 1 ? 'meal or snack' : 'meals or snacks'}.`}
           </p>
         </div>
 
@@ -279,13 +279,13 @@ export function MealsScreen() {
               {detail.tags.map((t) => <span key={t} className="pill pill-mint">{t}</span>)}
             </div>
             <div>
-              <div className="section-title" style={{ marginTop: 4 }}>Sangkap</div>
+              <div className="section-title" style={{ marginTop: 4 }}>Ingredients</div>
               <ul className="cue-list">
                 {detail.ingredients.map((i) => <li key={i}>{i}</li>)}
               </ul>
             </div>
             <div>
-              <div className="section-title">Paano lutuin</div>
+              <div className="section-title">Method</div>
               <p className="small muted">{detail.method}</p>
             </div>
             {detail.prepAhead && (
@@ -333,7 +333,7 @@ function CustomMealSheet({
     <Sheet open={open} onClose={onClose} title="Log your own">
       <div className="stack">
         <div className="field">
-          <label htmlFor="c-name">Ano ang kinain mo?</label>
+          <label htmlFor="c-name">What did you eat?</label>
           <input id="c-name" className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="Chicken inasal, 1 cup rice" />
         </div>
         <div className="field">

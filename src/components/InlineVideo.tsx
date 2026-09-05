@@ -1,9 +1,19 @@
 import { useEffect, useState } from 'react';
 import { getPhoto } from '../store/idb';
-import type { VideoSource } from '../utils/media';
+import { resolveShortTiktok, tiktokSource, type VideoSource } from '../utils/media';
 
-/** Plays an embedded video inside the card, rather than opening a sheet. */
-export function InlineVideo({ source }: { source: VideoSource }) {
+function OpenLink({ url, label = 'Watch on TikTok' }: { url: string; label?: string }) {
+  return (
+    <a className="btn btn-block" href={url} target="_blank" rel="noreferrer noopener">
+      {label}
+    </a>
+  );
+}
+
+/** Renders a playable video for any supported source. */
+export function VideoPlayer({ source }: { source: VideoSource }) {
+  const [resolved, setResolved] = useState<VideoSource | null>(null);
+  const [resolving, setResolving] = useState(false);
   const [online, setOnline] = useState(navigator.onLine);
 
   useEffect(() => {
@@ -17,31 +27,69 @@ export function InlineVideo({ source }: { source: VideoSource }) {
     };
   }, []);
 
+  // Short share links hide the video id behind a redirect; look it up once.
+  useEffect(() => {
+    if (source.kind !== 'tiktok-short') {
+      setResolved(null);
+      return;
+    }
+    let cancelled = false;
+    setResolving(true);
+    resolveShortTiktok(source.watch)
+      .then((id) => {
+        if (cancelled) return;
+        setResolved(id ? tiktokSource(id, source.watch) : null);
+      })
+      .finally(() => !cancelled && setResolving(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [source]);
+
   if (!online) {
     return (
-      <div className="chart-empty">
-        You are offline, so this video cannot load. The written form cues below work without a connection.
+      <div className="stack-sm">
+        <div className="chart-empty">
+          You are offline, so this video cannot load. The written steps still work without a connection.
+        </div>
+        <OpenLink url={source.watch} />
       </div>
     );
   }
 
-  if (source.kind === 'unknown') {
+  const effective = source.kind === 'tiktok-short' ? resolved : source;
+
+  if (!effective) {
     return (
-      <a className="btn btn-ghost btn-block" href={source.watch} target="_blank" rel="noreferrer noopener">
-        Open video
-      </a>
+      <div className="stack-sm">
+        <div className="chart-empty">
+          {resolving
+            ? 'Loading the video…'
+            : 'This one is a short share link, which TikTok will only open in its own app or site.'}
+        </div>
+        <OpenLink url={source.watch} />
+      </div>
     );
   }
 
+  if (effective.kind === 'unknown' || effective.kind === 'tiktok-short') {
+    return <OpenLink url={effective.watch} label="Open video" />;
+  }
+
   return (
-    <iframe
-      className={`video-frame${source.kind === 'youtube' ? ' video-frame-wide' : ''}`}
-      src={source.embed}
-      title="Exercise form video"
-      allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-      referrerPolicy="strict-origin-when-cross-origin"
-      loading="lazy"
-    />
+    <div className="stack-sm">
+      <iframe
+        className={`video-frame${effective.kind === 'youtube' || effective.kind === 'drive' ? ' video-frame-wide' : ''}`}
+        src={effective.embed}
+        title="Exercise form video"
+        allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+        referrerPolicy="strict-origin-when-cross-origin"
+        allowFullScreen
+      />
+      <a className="btn btn-ghost btn-sm btn-block" href={effective.watch} target="_blank" rel="noreferrer noopener">
+        Open in {effective.kind === 'youtube' ? 'YouTube' : effective.kind === 'drive' ? 'Drive' : 'TikTok'}
+      </a>
+    </div>
   );
 }
 

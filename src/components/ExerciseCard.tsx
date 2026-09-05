@@ -6,8 +6,8 @@ import { useApp } from '../store/AppContext';
 import { useRestTimer } from './RestTimer';
 import { progressionAdvice } from '../utils/progression';
 import { CheckIcon, ChevronDown, MinusIcon, PlusIcon, TimerIcon, TrophyIcon } from './Icons';
-import { InlineVideo, OwnClip } from './InlineVideo';
-import { parseVideoUrl, tiktokSource, tiktokSearchUrl, youtubeSearchUrl, type VideoSource } from '../utils/media';
+import { VideoSheet, VideoButton, type PlayRequest } from './VideoSheet';
+import { parseVideoUrl, tiktokSource, tiktokSearchUrl, youtubeSearchUrl } from '../utils/media';
 import { putPhoto } from '../store/idb';
 
 interface Props {
@@ -31,7 +31,7 @@ export function ExerciseCard({ exercise, index, log, defaultOpen }: Props) {
   const { state, updateSet, addSet, removeSet, setMedia, clearMedia } = useApp();
   const { start } = useRestTimer();
   const [open, setOpen] = useState(defaultOpen);
-  const [tab, setTab] = useState(0);
+  const [playing, setPlaying] = useState<PlayRequest | null>(null);
   const [linkDraft, setLinkDraft] = useState('');
   const [showAdd, setShowAdd] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -40,19 +40,18 @@ export function ExerciseCard({ exercise, index, log, defaultOpen }: Props) {
   const media = state.media[exercise.id] ?? {};
 
   // Reference videos: the ones from the plan, then anything she added herself.
-  const clips: { key: string; label: string; render: () => JSX.Element }[] = [
+  const clips: PlayRequest[] = [
     ...(exercise.videos ?? []).map((v) => ({
-      key: v.id,
-      label: v.title,
-      render: () => <InlineVideo source={tiktokSource(v.id, v.url)} />,
+      title: v.title,
+      subtitle: `@${v.author}`,
+      source: tiktokSource(v.id, v.url),
     })),
-    ...(media.clipId ? [{ key: 'mine', label: 'My clip', render: () => <OwnClip clipId={media.clipId as string} /> }] : []),
+    ...(media.clipId ? [{ title: 'My own clip', subtitle: 'Saved on this phone', clipId: media.clipId }] : []),
     ...(() => {
       const parsed = media.link ? parseVideoUrl(media.link) : null;
-      return parsed ? [{ key: 'link', label: 'My link', render: () => <InlineVideo source={parsed as VideoSource} /> }] : [];
+      return parsed ? [{ title: 'My saved link', subtitle: media.link, source: parsed }] : [];
     })(),
   ];
-  const activeClip = clips[Math.min(tab, clips.length - 1)];
 
   const saveClip = async (file: File | undefined) => {
     if (!file) return;
@@ -221,23 +220,10 @@ export function ExerciseCard({ exercise, index, log, defaultOpen }: Props) {
               Watch the form
             </div>
 
-            {clips.length > 1 && (
-              <div className="video-tabs">
-                {clips.map((c, i) => (
-                  <button
-                    key={c.key}
-                    className={`chip${activeClip?.key === c.key ? ' active' : ''}`}
-                    style={{ fontSize: 11, padding: '6px 11px' }}
-                    onClick={() => setTab(i)}
-                  >
-                    {c.label}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {activeClip ? (
-              activeClip.render()
+            {clips.length > 0 ? (
+              clips.map((c) => (
+                <VideoButton key={c.title + (c.subtitle ?? '')} title={c.title} subtitle={c.subtitle} onPlay={() => setPlaying(c)} />
+              ))
             ) : (
               <p className="small muted">
                 No clip saved for this one yet. Search a tutorial below, then paste the link to keep it here.
@@ -259,7 +245,7 @@ export function ExerciseCard({ exercise, index, log, defaultOpen }: Props) {
             {showAdd && (
               <div className="card card-flat stack-sm" style={{ marginTop: 4 }}>
                 <div className="field">
-                  <label htmlFor={`link-${exercise.id}`}>Paste a YouTube or TikTok link</label>
+                  <label htmlFor={`link-${exercise.id}`}>Paste a YouTube, TikTok or Google Drive link</label>
                   <input
                     id={`link-${exercise.id}`}
                     className="input"
@@ -278,16 +264,15 @@ export function ExerciseCard({ exercise, index, log, defaultOpen }: Props) {
                   ref={clipRef}
                   type="file"
                   accept="video/*"
-                  capture="environment"
                   style={{ display: 'none' }}
                   onChange={(e) => saveClip(e.target.files?.[0])}
                 />
                 <button className="btn btn-ghost btn-sm btn-block" disabled={busy} onClick={() => clipRef.current?.click()}>
-                  {busy ? 'Saving…' : 'Record or upload my own clip'}
+                  {busy ? 'Saving…' : 'Save a video file to this phone'}
                 </button>
                 <p className="tiny faint">
-                  Your own clip is stored on this phone and cannot be deleted by anyone else. Keep it short, a few
-                  seconds is plenty.
+                  A file saved here lives on your phone and plays with no internet. Nothing anyone deletes online can
+                  touch it.
                 </p>
 
                 {(media.link || media.clipId) && (
@@ -307,6 +292,8 @@ export function ExerciseCard({ exercise, index, log, defaultOpen }: Props) {
               </div>
             )}
           </div>
+
+          <VideoSheet request={playing} onClose={() => setPlaying(null)} />
         </div>
       )}
     </div>

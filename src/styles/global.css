@@ -240,10 +240,12 @@ body.rest-active .app-shell { padding-bottom: calc(var(--tab-h) + env(safe-area-
 
 /* ---------------- Inputs ---------------- */
 
-.field { display: flex; flex-direction: column; gap: 6px; }
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .field label { font-size: 12px; font-weight: 700; color: var(--ink-faint); letter-spacing: 0.04em; text-transform: uppercase; }
 .input, textarea.input, select.input {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   padding: 12px 14px;
   border-radius: var(--r-md);
   border: 1px solid var(--line);
@@ -291,7 +293,7 @@ textarea.input { resize: vertical; min-height: 76px; }
   outline: none;
 }
 .set-input:focus { border-color: var(--pink-400); background: #fff; box-shadow: 0 0 0 3px var(--pink-100); }
-.set-row.done .set-input { background: #fff; border-color: var(--pink-200); }
+.set-row.done .set-input { background: #fff; border-color: var(--pink-400); }
 
 .tick {
   width: 42px; height: 42px;
@@ -311,7 +313,20 @@ textarea.input { resize: vertical; min-height: 76px; }
 
 /* ---------------- Exercise card ---------------- */
 
-.exercise-card { padding: 0; overflow: hidden; }
+.exercise-card {
+  padding: 0;
+  overflow: hidden;
+  /* The whole exercise panel sits on pink, with a deeper pink edge. */
+  background: var(--surface-tint);
+  border-color: var(--pink-300);
+}
+/* Inputs and inner panels go white so they read against the pink. */
+.exercise-card .set-input { background: #fff; border-color: var(--pink-200); }
+.exercise-card .card-flat { background: #fff; border-color: var(--pink-200); }
+.exercise-card .tick { background: #fff; border-color: var(--pink-200); }
+.exercise-card .tick.on { background: var(--pink-500); border-color: var(--pink-500); }
+.exercise-card .video-card { background: #fff; border-color: var(--pink-200); }
+.exercise-card .input { background: #fff; }
 .exercise-head {
   display: flex;
   align-items: center;
@@ -329,7 +344,7 @@ textarea.input { resize: vertical; min-height: 76px; }
   font-weight: 800; font-size: 14px;
 }
 .exercise-card.complete .exercise-num { background: var(--pink-500); color: #fff; }
-.exercise-body { padding: 0 16px 16px; border-top: 1px solid var(--line); padding-top: 14px; }
+.exercise-body { padding: 0 16px 16px; border-top: 1px solid var(--pink-200); padding-top: 14px; }
 
 .cue-list { margin: 0; padding-left: 18px; color: var(--ink-soft); font-size: 13.5px; }
 .cue-list li { margin-bottom: 5px; }
@@ -698,3 +713,18 @@ textarea.input { resize: vertical; min-height: 76px; }
   transition: all 0.15s ease;
 }
 .grocery-item.checked .grocery-check { background: var(--pink-500); border-color: var(--pink-500); color: #fff; }
+
+
+/* Date and time inputs size themselves from their content on WebKit, which
+   pushed the start-date box past the edge of its card. */
+input[type='date'],
+input[type='time'] {
+  -webkit-appearance: none;
+  appearance: none;
+  min-width: 0;
+  max-width: 100%;
+  display: block;
+}
+input[type='date']::-webkit-date-and-time-value { text-align: left; }
+.card, .card-flat, .stat, .link-row { min-width: 0; }
+.row > * { min-width: 0; }
