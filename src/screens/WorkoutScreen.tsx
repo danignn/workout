@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { EXERCISE_LIBRARY, getSession, libraryExercise, PROGRAM_META, type Exercise, type MobilityMove } from '../data/program';
 import { Sheet } from '../components/Sheet';
@@ -8,6 +8,7 @@ import { ExerciseCard } from '../components/ExerciseCard';
 import { CheckIcon, ChevronDown, ChevronLeft, InfoIcon } from '../components/Icons';
 import { VideoSheet, VideoButton, type PlayRequest } from '../components/VideoSheet';
 import { parseVideoUrl } from '../utils/media';
+import { putPhoto } from '../store/idb';
 import { formatLong, todayKey } from '../utils/date';
 import { setsCompleted, volumeOf } from '../utils/stats';
 
@@ -17,6 +18,7 @@ function MobilityBlock({
   moves,
   video,
   localClipId,
+  onSaveFile,
   onPlay,
   defaultOpen,
 }: {
@@ -25,6 +27,7 @@ function MobilityBlock({
   moves: MobilityMove[];
   video?: string;
   localClipId?: string;
+  onSaveFile: () => void;
   onPlay: (r: PlayRequest) => void;
   defaultOpen: boolean;
 }) {
@@ -54,7 +57,7 @@ function MobilityBlock({
                     return;
                   }
                   const source = parseVideoUrl(video as string);
-                  if (source) onPlay({ title, subtitle: 'Follow-along video', source });
+                  if (source) onPlay({ title, subtitle: 'Follow-along video', source, onSaveFile });
                 }}
               />
             </div>
@@ -81,9 +84,11 @@ export function WorkoutScreen() {
   const [params] = useSearchParams();
   const date = params.get('date') ?? todayKey();
   const navigate = useNavigate();
-  const { state, ensureLog, getLog, setLogNotes, toggleWorkoutComplete, addExtraExercise, removeExtraExercise } = useApp();
+  const { state, ensureLog, getLog, setLogNotes, toggleWorkoutComplete, addExtraExercise, removeExtraExercise, setMedia } = useApp();
   const [playing, setPlaying] = useState<PlayRequest | null>(null);
   const [addOpen, setAddOpen] = useState(false);
+  const mobilityFileRef = useRef<HTMLInputElement>(null);
+  const mobilityKeyRef = useRef<string | null>(null);
 
   const session = getSession(sessionId);
 
@@ -152,6 +157,7 @@ export function WorkoutScreen() {
           moves={session.warmup}
           video={session.warmupVideo}
           localClipId={state.media[`warmup:${session.id}`]?.clipId}
+          onSaveFile={() => { mobilityKeyRef.current = `warmup:${session.id}`; mobilityFileRef.current?.click(); }}
           onPlay={setPlaying}
           defaultOpen={totals.done === 0}
         />
@@ -221,6 +227,7 @@ export function WorkoutScreen() {
           moves={session.cooldown}
           video={session.cooldownVideo}
           localClipId={state.media[`cooldown:${session.id}`]?.clipId}
+          onSaveFile={() => { mobilityKeyRef.current = `cooldown:${session.id}`; mobilityFileRef.current?.click(); }}
           onPlay={setPlaying}
           defaultOpen={allSetsDone}
         />
@@ -296,6 +303,29 @@ export function WorkoutScreen() {
           })}
         </div>
       </Sheet>
+
+      <input
+        ref={mobilityFileRef}
+        type="file"
+        accept="video/*"
+        style={{ display: 'none' }}
+        onChange={async (e) => {
+          const file = e.target.files?.[0];
+          const key = mobilityKeyRef.current;
+          if (file && key) {
+            const id = `vid-${key}-${Date.now()}`;
+            try {
+              await putPhoto(id, file);
+              setMedia(key, { clipId: id });
+              setPlaying(null);
+            } catch {
+              alert('That file could not be saved.');
+            }
+          }
+          mobilityKeyRef.current = null;
+          if (mobilityFileRef.current) mobilityFileRef.current.value = '';
+        }}
+      />
 
       <VideoSheet request={playing} onClose={() => setPlaying(null)} />
     </>

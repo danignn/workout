@@ -48,6 +48,7 @@ export function ExerciseCard({ exercise, index, log, defaultOpen }: Props) {
       title: v.title,
       subtitle: `@${v.author}`,
       source: parseVideoUrl(v.url) ?? undefined,
+      onSaveFile: () => clipRef.current?.click(),
     })),
     ...(() => {
       const parsed = media.link ? parseVideoUrl(media.link) : null;

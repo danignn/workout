@@ -729,3 +729,29 @@ input[type='time'] {
 input[type='date']::-webkit-date-and-time-value { text-align: left; }
 .card, .card-flat, .stat, .link-row { min-width: 0; }
 .row > * { min-width: 0; }
+
+/* ---------------- Video poster (TikTok cannot embed in an installed app) ---------------- */
+
+.video-poster {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 28px 20px;
+  border-radius: var(--r-md);
+  background: var(--surface-tint);
+  border: 1px dashed var(--pink-300);
+  text-align: center;
+}
+.video-poster-icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: var(--pink-500);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-md);
+}

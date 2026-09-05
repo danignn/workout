@@ -1,19 +1,32 @@
 import { useEffect, useState } from 'react';
 import { getPhoto } from '../store/idb';
 import { resolveShortTiktok, tiktokSource, type VideoSource } from '../utils/media';
+import { PlayIcon } from './Icons';
 
-function OpenLink({ url, label = 'Watch on TikTok' }: { url: string; label?: string }) {
+/**
+ * TikTok refuses to render its embed inside an installed web app, which left a
+ * dead grey box where the video should be. YouTube and Drive do allow it, so
+ * only those are embedded. A TikTok link opens in TikTok instead, which is the
+ * behaviour that already worked for the warm-up videos.
+ */
+type EmbeddableSource = Extract<VideoSource, { kind: 'youtube' | 'drive' }>;
+
+function canEmbed(source: VideoSource): source is EmbeddableSource {
+  return source.kind === 'youtube' || source.kind === 'drive';
+}
+
+function OpenButton({ source }: { source: VideoSource }) {
+  const where =
+    source.kind === 'youtube' ? 'YouTube' : source.kind === 'drive' ? 'Drive' : source.kind === 'unknown' ? 'the browser' : 'TikTok';
   return (
-    <a className="btn btn-block" href={url} target="_blank" rel="noreferrer noopener">
-      {label}
+    <a className="btn btn-block" href={source.watch} target="_blank" rel="noreferrer noopener">
+      <PlayIcon size={16} /> Watch on {where}
     </a>
   );
 }
 
-/** Renders a playable video for any supported source. */
-export function VideoPlayer({ source }: { source: VideoSource }) {
+export function VideoPlayer({ source, onSaveFile }: { source: VideoSource; onSaveFile?: () => void }) {
   const [resolved, setResolved] = useState<VideoSource | null>(null);
-  const [resolving, setResolving] = useState(false);
   const [online, setOnline] = useState(navigator.onLine);
 
   useEffect(() => {
@@ -27,85 +40,91 @@ export function VideoPlayer({ source }: { source: VideoSource }) {
     };
   }, []);
 
-  // Short share links hide the video id behind a redirect; look it up once.
+  // Short share links still need resolving before they can be opened cleanly.
   useEffect(() => {
     if (source.kind !== 'tiktok-short') {
       setResolved(null);
       return;
     }
     let cancelled = false;
-    setResolving(true);
-    resolveShortTiktok(source.watch)
-      .then((id) => {
-        if (cancelled) return;
-        setResolved(id ? tiktokSource(id, source.watch) : null);
-      })
-      .finally(() => !cancelled && setResolving(false));
+    resolveShortTiktok(source.watch).then((id) => {
+      if (!cancelled && id) setResolved(tiktokSource(id, source.watch));
+    });
     return () => {
       cancelled = true;
     };
   }, [source]);
 
+  const effective = source.kind === 'tiktok-short' ? (resolved ?? source) : source;
+
+  const saveRow = onSaveFile && (
+    <>
+      <button className="btn btn-ghost btn-block" onClick={onSaveFile}>
+        Save a video file for this
+      </button>
+      <p className="tiny faint center">
+        Save it once and it plays right here, instantly and offline, even if the post is deleted.
+      </p>
+    </>
+  );
+
   if (!online) {
     return (
       <div className="stack-sm">
         <div className="chart-empty">
-          You are offline, so this video cannot load. The written steps still work without a connection.
+          You are offline. The written cues below still work, and a saved video file would play without a connection.
         </div>
-        <OpenLink url={source.watch} />
+        {saveRow}
       </div>
     );
   }
 
-  const effective = source.kind === 'tiktok-short' ? resolved : source;
-
-  if (!effective) {
+  if (canEmbed(effective)) {
     return (
       <div className="stack-sm">
-        <div className="chart-empty">
-          {resolving
-            ? 'Loading the video…'
-            : 'This one is a short share link, which TikTok will only open in its own app or site.'}
-        </div>
-        <OpenLink url={source.watch} />
+        <iframe
+          className="video-frame video-frame-wide"
+          src={effective.embed}
+          title="Exercise form video"
+          allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+          referrerPolicy="strict-origin-when-cross-origin"
+          allowFullScreen
+        />
+        <OpenButton source={effective} />
+        {saveRow}
       </div>
     );
-  }
-
-  if (effective.kind === 'unknown' || effective.kind === 'tiktok-short') {
-    return <OpenLink url={effective.watch} label="Open video" />;
   }
 
   return (
     <div className="stack-sm">
-      <a className="btn btn-block" href={effective.watch} target="_blank" rel="noreferrer noopener">
-        Open in {effective.kind === 'youtube' ? 'YouTube' : effective.kind === 'drive' ? 'Drive' : 'TikTok'}
-      </a>
-      <p className="tiny faint center">
-        If the player below stays blank, TikTok is blocking playback here. Save the file in Me &rarr; My videos and it
-        will play instantly every time.
-      </p>
-      <iframe
-        className={`video-frame${effective.kind === 'youtube' || effective.kind === 'drive' ? ' video-frame-wide' : ''}`}
-        src={effective.embed}
-        title="Exercise form video"
-        allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-        referrerPolicy="strict-origin-when-cross-origin"
-        allowFullScreen
-      />
+      <div className="video-poster">
+        <span className="video-poster-icon"><PlayIcon size={26} /></span>
+        <span className="small bold">Opens in TikTok</span>
+        <span className="tiny muted center">
+          TikTok does not allow its videos to play inside another app, so it opens in TikTok and comes straight back.
+        </span>
+      </div>
+      <OpenButton source={effective} />
+      {saveRow}
     </div>
   );
 }
 
-/** Plays a clip the user saved to her own device. */
+/** Plays a clip saved to this device. */
 export function OwnClip({ clipId }: { clipId: string }) {
   const [url, setUrl] = useState<string | null>(null);
+  const [missing, setMissing] = useState(false);
 
   useEffect(() => {
     let revoke: string | null = null;
     let cancelled = false;
     getPhoto(clipId).then((blob) => {
-      if (!blob || cancelled) return;
+      if (cancelled) return;
+      if (!blob) {
+        setMissing(true);
+        return;
+      }
       revoke = URL.createObjectURL(blob);
       setUrl(revoke);
     });
@@ -115,6 +134,7 @@ export function OwnClip({ clipId }: { clipId: string }) {
     };
   }, [clipId]);
 
-  if (!url) return <div className="chart-empty">Loading your clip…</div>;
-  return <video className="video-frame" src={url} controls playsInline preload="metadata" />;
+  if (missing) return <div className="chart-empty">That saved video is no longer on this device.</div>;
+  if (!url) return <div className="chart-empty">Loading your video…</div>;
+  return <video className="video-frame" src={url} controls autoPlay playsInline preload="metadata" />;
 }

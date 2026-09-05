@@ -8,6 +8,8 @@ export interface PlayRequest {
   subtitle?: string;
   source?: VideoSource;
   clipId?: string;
+  /** Lets the sheet offer "save a file for this" without leaving the workout. */
+  onSaveFile?: () => void;
 }
 
 /** Videos open in a sheet on tap, at full height, and close when you are done. */
@@ -17,7 +19,11 @@ export function VideoSheet({ request, onClose }: { request: PlayRequest | null; 
       {request && (
         <div className="stack">
           {request.subtitle && <p className="small muted" style={{ marginTop: -6 }}>{request.subtitle}</p>}
-          {request.clipId ? <OwnClip clipId={request.clipId} /> : request.source ? <VideoPlayer source={request.source} /> : null}
+          {request.clipId ? (
+            <OwnClip clipId={request.clipId} />
+          ) : request.source ? (
+            <VideoPlayer source={request.source} onSaveFile={request.onSaveFile} />
+          ) : null}
         </div>
       )}
     </Sheet>
