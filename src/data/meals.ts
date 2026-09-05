@@ -834,50 +834,64 @@ export interface PrepStep {
   title: string;
   detail: string;
   minutes: number;
+  /** How long it actually keeps, so nothing sits in the fridge past its life. */
+  storage?: string;
 }
+
+export const FOOD_SAFETY_NOTE =
+  'Cooked food should be cooled and refrigerated within two hours, and most cooked dishes keep 3 to 4 days. Anything you will not eat by then goes in the freezer on the day you cook it, not once it looks doubtful. Reheat until piping hot the whole way through, and reheat a portion once only.';
 
 export const SUNDAY_PREP: PrepStep[] = [
   {
     order: 1,
-    title: 'Put the monggo on to boil',
-    detail: 'It takes 30 minutes and needs no attention, so start it first and cook everything else around it.',
+    title: 'Put the mung beans on to boil',
+    detail: 'They take 30 minutes and need no attention, so start them first and cook everything else around them.',
     minutes: 30,
+    storage: 'Cooked mung bean stew, refrigerated: 3 to 4 days. Freezes well.',
   },
   {
     order: 2,
-    title: 'Boil a dozen eggs',
-    detail: 'Ten minutes, then straight into cold water. This is your snacks sorted for the whole week.',
+    title: 'Boil half a dozen eggs',
+    detail:
+      'Ten minutes, then straight into cold water and into the fridge within two hours. Leave them in their shells, because peeled eggs dry out and spoil far faster. Peel one only when you are about to eat it, and boil a fresh batch midweek rather than doing a dozen on Sunday.',
     minutes: 12,
+    storage: 'In the shell, refrigerated: up to 1 week. Once peeled: eat the same day.',
   },
   {
     order: 3,
     title: 'Cook the chicken adobo',
     detail: 'Make the full 500g. Three to four portions of lunch, done in one pot, and it gets better by day two.',
     minutes: 30,
+    storage: 'Refrigerated: 3 to 4 days. Freeze anything you will not eat by Wednesday.',
   },
   {
     order: 4,
-    title: 'Brown a batch of giniling',
-    detail: 'Three portions of baon. Cool it fully before it goes in the fridge or it sweats and spoils faster.',
+    title: 'Brown a batch of ground meat',
+    detail: 'Three packed lunches. Cool it fully before it goes in the fridge or it sweats and spoils faster.',
     minutes: 25,
+    storage: 'Refrigerated: 3 to 4 days. Freezes well for up to 2 months.',
   },
   {
     order: 5,
     title: 'Marinate the inasal',
-    detail: 'Chicken in calamansi, vinegar, lemongrass, ginger and garlic. Fridge it. Cooks in 15 minutes midweek.',
+    detail: 'Raw chicken in calamansi, vinegar, lemongrass, ginger and garlic. Fridge it on the bottom shelf so it cannot drip onto anything. Cooks in 15 minutes midweek.',
     minutes: 10,
+    storage: 'Raw marinated chicken: cook within 2 days, or freeze it in the marinade.',
   },
   {
     order: 6,
-    title: 'Wash and cut the gulay',
-    detail: 'Water spinach (kangkong), sitaw, carrot, sayote into containers. The reason weeknight cooking collapses is the chopping, not the cooking.',
+    title: 'Wash and cut the vegetables',
+    detail:
+      'Water spinach, string beans, carrot and chayote into containers. The reason weeknight cooking collapses is the chopping, not the cooking. Dry the leaves properly before they go in, because wet leaves turn to slime.',
     minutes: 20,
+    storage: 'Cut vegetables: 3 to 5 days. Leafy greens: 2 to 3 days, so use those first.',
   },
   {
     order: 7,
     title: 'Portion everything out',
-    detail: 'Into single-serve containers, labelled with the day. Cooked ulam keeps 3 to 4 days in the fridge, freeze anything for later in the week.',
+    detail: 'Into single-serve containers, labelled with the date you cooked it, not the day you plan to eat it. Cool food fully before the lid goes on and it goes in the fridge.',
     minutes: 15,
+    storage: 'Label everything. If you cannot remember when you cooked it, throw it out.',
   },
 ];
 

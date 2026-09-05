@@ -172,8 +172,8 @@ export function PlanScreen() {
         {tab === 'videos' && (
           <div className="stack-sm">
             <p className="small muted" style={{ marginBottom: 6 }}>
-              Every form video referenced in your plan, all from @vera.armishaw. These also play inline inside each
-              exercise, and you can attach your own clips there.
+              Every form video referenced in your plan. Tap any exercise in a workout to play its video there, or
+              open one here. You can attach your own clips on any exercise too.
             </p>
             {ALL_VIDEOS.map((v) => (
               <a key={v.id} className="video-card" href={v.url} target="_blank" rel="noreferrer noopener">

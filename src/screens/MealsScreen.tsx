@@ -6,6 +6,7 @@ import {
   MEAL_CATEGORIES,
   NUTRITION_NOTES,
   OPTIONAL_ITEMS,
+  FOOD_SAFETY_NOTE,
   PRICE_NOTE,
   SUNDAY_PREP,
   basketCount,
@@ -20,7 +21,7 @@ import {
 } from '../data/meals';
 import { useApp } from '../store/AppContext';
 import { Sheet } from '../components/Sheet';
-import { CheckIcon, InfoIcon, PlusIcon, TrashIcon } from '../components/Icons';
+import { CheckIcon, ChevronDown, InfoIcon, PlusIcon, TrashIcon } from '../components/Icons';
 import { formatShort, todayKey } from '../utils/date';
 
 type Tab = 'ideas' | 'today' | 'grocery' | 'notes';
@@ -35,6 +36,8 @@ export function MealsScreen() {
   const [detail, setDetail] = useState<Meal | null>(null);
   const [customOpen, setCustomOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
+  const toggleSection = (id: string) => setOpenSections((o) => ({ ...o, [id]: !o[id] }));
 
   const today = todayKey();
   const logged = state.meals[today] ?? [];
@@ -239,16 +242,44 @@ export function MealsScreen() {
               <span className="tiny muted">{PRICE_NOTE}</span>
             </div>
 
-            {GROCERY_LIST.map((section) => (
-              <div key={section.id} className="card">
-                <div className="row-between" style={{ marginBottom: 4 }}>
-                  <span className="bold small">{section.emoji} {section.label}</span>
-                  <span className="pill pill-outline">
-                    {peso(section.items.filter((i) => state.grocery[i.name]).reduce((n, i) => n + i.price, 0))}
+            <div className="chip-row">
+              {GROCERY_LIST.map((section) => {
+                const n = section.items.filter((i) => state.grocery[i.name]).length;
+                return (
+                  <button
+                    key={section.id}
+                    className={`chip${openSections[section.id] ? ' active' : ''}`}
+                    onClick={() => {
+                      toggleSection(section.id);
+                      window.setTimeout(() => {
+                        document.getElementById(`sec-${section.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }, 60);
+                    }}
+                  >
+                    {section.emoji} {section.label}{n > 0 ? ` (${n})` : ''}
+                  </button>
+                );
+              })}
+            </div>
+
+            {GROCERY_LIST.map((section) => {
+              const isOpen = !!openSections[section.id];
+              const chosen = section.items.filter((i) => state.grocery[i.name]);
+              return (
+              <div key={section.id} id={`sec-${section.id}`} className="card" style={{ scrollMarginTop: 12 }}>
+                <button className="row-between" style={{ width: '100%', textAlign: 'left' }} onClick={() => toggleSection(section.id)} aria-expanded={isOpen}>
+                  <span className="grow">
+                    <span className="bold small" style={{ display: 'block' }}>{section.emoji} {section.label}</span>
+                    <span className="tiny faint">
+                      {chosen.length > 0 ? `${chosen.length} of ${section.items.length} picked` : `${section.items.length} items · ${section.aisle}`}
+                    </span>
                   </span>
-                </div>
-                <p className="tiny faint" style={{ marginBottom: 4 }}>{section.aisle}</p>
-                {section.items.map((item) => {
+                  <span className="pill pill-outline">{peso(chosen.reduce((n, i) => n + i.price, 0))}</span>
+                  <span style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease', color: 'var(--ink-faint)', display: 'flex', marginLeft: 8 }}>
+                    <ChevronDown size={18} />
+                  </span>
+                </button>
+                {isOpen && section.items.map((item) => {
                   const checked = !!state.grocery[item.name];
                   return (
                     <button
@@ -269,11 +300,25 @@ export function MealsScreen() {
                   );
                 })}
               </div>
-            ))}
+              );
+            })}
 
             <div className="card">
-              <div className="section-title" style={{ margin: '0 0 6px' }}>Optional</div>
-              {OPTIONAL_ITEMS.map((item) => (
+              <button
+                className="row-between"
+                style={{ width: '100%', textAlign: 'left' }}
+                onClick={() => toggleSection('optional')}
+                aria-expanded={!!openSections.optional}
+              >
+                <span className="grow">
+                  <span className="bold small" style={{ display: 'block' }}>💊 Optional</span>
+                  <span className="tiny faint">{OPTIONAL_ITEMS.length} item · supplements</span>
+                </span>
+                <span style={{ transform: openSections.optional ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease', color: 'var(--ink-faint)', display: 'flex' }}>
+                  <ChevronDown size={18} />
+                </span>
+              </button>
+              {openSections.optional && OPTIONAL_ITEMS.map((item) => (
                 <button
                   key={item.name}
                   className={`grocery-item${state.grocery[item.name] ? ' checked' : ''}`}
@@ -291,6 +336,10 @@ export function MealsScreen() {
             </div>
 
             <div className="section-title">Sunday prep, about 2 hours</div>
+            <div className="card card-flat card-tight row" style={{ gap: 10, alignItems: 'flex-start' }}>
+              <span style={{ flexShrink: 0, marginTop: 1 }}>🧊</span>
+              <span className="tiny muted">{FOOD_SAFETY_NOTE}</span>
+            </div>
             <div className="card">
               {SUNDAY_PREP.map((step) => (
                 <div className="mobility-item" key={step.order}>
@@ -300,6 +349,11 @@ export function MealsScreen() {
                       {step.title} <span className="muted" style={{ fontWeight: 500 }}>· {step.minutes} min</span>
                     </span>
                     <span className="tiny muted">{step.detail}</span>
+                    {step.storage && (
+                      <span className="tiny" style={{ display: 'block', marginTop: 4, color: 'var(--pink-700)', fontWeight: 600 }}>
+                        🧊 {step.storage}
+                      </span>
+                    )}
                   </span>
                 </div>
               ))}

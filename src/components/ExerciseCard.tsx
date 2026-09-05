@@ -8,7 +8,7 @@ import { progressionAdvice } from '../utils/progression';
 import { adjustedLoad, trainingAdjustment } from '../utils/cycle';
 import { CheckIcon, ChevronDown, MinusIcon, PlusIcon, TimerIcon, TrophyIcon } from './Icons';
 import { VideoSheet, VideoButton, type PlayRequest } from './VideoSheet';
-import { parseVideoUrl, tiktokSource, tiktokSearchUrl, youtubeSearchUrl } from '../utils/media';
+import { parseVideoUrl, tiktokSearchUrl, youtubeSearchUrl } from '../utils/media';
 import { putPhoto } from '../store/idb';
 
 interface Props {
@@ -45,7 +45,7 @@ export function ExerciseCard({ exercise, index, log, defaultOpen }: Props) {
     ...(exercise.videos ?? []).map((v) => ({
       title: v.title,
       subtitle: `@${v.author}`,
-      source: tiktokSource(v.id, v.url),
+      source: parseVideoUrl(v.url) ?? undefined,
     })),
     ...(media.clipId ? [{ title: 'My own clip', subtitle: 'Saved on this phone', clipId: media.clipId }] : []),
     ...(() => {

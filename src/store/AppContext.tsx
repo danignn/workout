@@ -155,7 +155,36 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const ensureLog = useCallback(
     (sessionId: string, date = todayKey()) => {
       const existing = state.workouts.find((w) => w.sessionId === sessionId && w.date === date);
-      if (existing) return existing;
+      if (existing) {
+        // A log written before an exercise change has entries keyed by the old
+        // ids, which left the new exercises with no set rows to fill in at all.
+        // Backfill anything the session now expects, keeping what was logged.
+        const session = getSession(sessionId);
+        const blank = (ex: { suggestedKg: number }): LoggedSet => ({
+          reps: null,
+          weight: ex.suggestedKg > 0 ? ex.suggestedKg : null,
+          done: false,
+        });
+
+        let changed = false;
+        const entries: Record<string, LoggedSet[]> = { ...existing.entries };
+        for (const ex of session?.exercises ?? []) {
+          const current = entries[ex.id];
+          if (!current) {
+            entries[ex.id] = Array.from({ length: ex.sets }, () => blank(ex));
+            changed = true;
+          } else if (current.length < ex.sets) {
+            // Keep every set already logged and pad out to the prescribed count.
+            entries[ex.id] = [...current, ...Array.from({ length: ex.sets - current.length }, () => blank(ex))];
+            changed = true;
+          }
+        }
+        if (!changed) return existing;
+
+        const patched: WorkoutLog = { ...existing, entries };
+        setState((s) => ({ ...s, workouts: s.workouts.map((w) => (w.id === existing.id ? patched : w)) }));
+        return patched;
+      }
       const created = buildLog(sessionId, date);
       setState((s) =>
         s.workouts.some((w) => w.sessionId === sessionId && w.date === date)

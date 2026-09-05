@@ -66,12 +66,7 @@ export function currentPhase(cycle: CycleSettings, today: string): PhaseInfo | n
 }
 
 export function nextPeriodIn(cycle: CycleSettings, today: string): number | null {
-  const anchor = anchorStart(cycle);
-  if (!cycle.enabled || !anchor) return null;
-  const elapsed = daysBetween(anchor, today);
-  if (elapsed < 0) return null;
-  const length = Math.max(21, cycle.cycleLength);
-  return length - (elapsed % length);
+  return cyclePrediction(cycle, today)?.daysAway ?? null;
 }
 
 /* ------------------------------------------------------------------ *
@@ -174,4 +169,79 @@ export function averageCycleLength(cycle: CycleSettings): number | null {
   const usable = gaps.filter((g) => g >= 18 && g <= 45);
   if (usable.length === 0) return null;
   return Math.round(usable.reduce((n, g) => n + g, 0) / usable.length);
+}
+
+/* ------------------------------------------------------------------ *
+ * Prediction
+ * ------------------------------------------------------------------ */
+
+export interface CyclePrediction {
+  /** YYYY-MM-DD the next period is expected to start. */
+  nextStart: string;
+  /** Negative once the prediction is overdue. */
+  daysAway: number;
+  /** Cycle length used for the prediction. */
+  length: number;
+  /** Whether the length came from her own records or the manual setting. */
+  source: 'records' | 'setting';
+  /** How many gaps between logged periods fed the average. */
+  samples: number;
+  /** Spread of those gaps in days, so the estimate can show a window. */
+  spread: number;
+  confidence: 'none' | 'learning' | 'fair' | 'good';
+  message: string;
+}
+
+/** Gaps between consecutive logged period starts, filtered to plausible cycles. */
+function gapsBetweenPeriods(cycle: CycleSettings): number[] {
+  const starts = sortedLogs(cycle).map((l) => l.start);
+  const gaps: number[] = [];
+  for (let i = 0; i < starts.length - 1; i += 1) gaps.push(daysBetween(starts[i + 1], starts[i]));
+  return gaps.filter((g) => g >= 18 && g <= 45);
+}
+
+function addDaysKey(key: string, days: number): string {
+  const [y, m, d] = key.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  date.setDate(date.getDate() + days);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+/**
+ * Predicts the next period from logged history where there is enough of it,
+ * and says plainly which it used. One logged period cannot produce a pattern,
+ * so it falls back to the setting and says so rather than implying it learned
+ * something it has not.
+ */
+export function cyclePrediction(cycle: CycleSettings, today: string): CyclePrediction | null {
+  const anchor = anchorStart(cycle);
+  if (!anchor) return null;
+
+  const gaps = gapsBetweenPeriods(cycle);
+  const samples = gaps.length;
+  const learned = samples >= 1 ? Math.round(gaps.reduce((n, g) => n + g, 0) / samples) : null;
+  const spread = samples >= 2 ? Math.max(...gaps) - Math.min(...gaps) : 0;
+
+  const length = Math.max(18, learned ?? cycle.cycleLength);
+  const source: 'records' | 'setting' = learned ? 'records' : 'setting';
+
+  // Roll forward from the most recent start until the prediction is in the future.
+  let nextStart = anchor;
+  let guard = 0;
+  while (nextStart <= today && guard < 60) {
+    nextStart = addDaysKey(nextStart, length);
+    guard += 1;
+  }
+
+  const confidence: CyclePrediction['confidence'] =
+    samples === 0 ? 'none' : samples === 1 ? 'learning' : samples < 4 ? 'fair' : 'good';
+
+  const message =
+    samples === 0
+      ? 'Based on the default cycle length. Log one more period and this switches to your own pattern.'
+      : samples === 1
+        ? `Based on the single ${length} day gap between your two logged periods. One more will make this much steadier.`
+        : `Based on your last ${samples + 1} periods, averaging ${length} days${spread > 0 ? `, varying by about ${spread} days` : ''}.`;
+
+  return { nextStart, daysAway: daysBetween(today, nextStart), length, source, samples, spread, confidence, message };
 }

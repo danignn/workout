@@ -3,9 +3,8 @@ import { useApp } from '../store/AppContext';
 import { CheckIcon, InfoIcon, TrashIcon } from '../components/Icons';
 import { formatLong, formatShort, todayKey } from '../utils/date';
 import {
-  averageCycleLength,
   currentPhase,
-  nextPeriodIn,
+  cyclePrediction,
   openPeriod,
   periodDay,
   sortedLogs,
@@ -22,9 +21,8 @@ export function CycleScreen() {
   const open = openPeriod(cycle);
   const onPeriodToday = periodDay(cycle, today);
   const phase = currentPhase(cycle, today);
-  const nextIn = nextPeriodIn(cycle, today);
   const adjustment = trainingAdjustment(cycle, today);
-  const average = averageCycleLength(cycle);
+  const prediction = cyclePrediction(cycle, today);
 
   return (
     <>
@@ -97,13 +95,37 @@ export function CycleScreen() {
         )}
 
         {/* Stats */}
+        {prediction && (
+          <div className="card">
+            <div className="row-between">
+              <span className="grow">
+                <span className="small bold" style={{ display: 'block' }}>Next period expected</span>
+                <span className="tiny faint">
+                  {prediction.daysAway >= 0
+                    ? `${formatLong(prediction.nextStart)} · in ${prediction.daysAway} ${prediction.daysAway === 1 ? 'day' : 'days'}`
+                    : `${formatLong(prediction.nextStart)} · ${Math.abs(prediction.daysAway)} days ago`}
+                </span>
+              </span>
+              <span className={`pill${prediction.source === 'records' ? '' : ' pill-outline'}`}>
+                {prediction.source === 'records' ? 'From your records' : 'Default'}
+              </span>
+            </div>
+            {prediction.spread > 0 && (
+              <p className="tiny muted" style={{ marginTop: 8 }}>
+                Realistically anywhere in a {prediction.spread} day window around that date.
+              </p>
+            )}
+            <p className="tiny faint" style={{ marginTop: 8 }}>{prediction.message}</p>
+          </div>
+        )}
+
         <div className="stat-grid">
           <div className="stat">
-            <div className="v num">{nextIn ?? '–'}</div>
+            <div className="v num">{prediction ? Math.max(0, prediction.daysAway) : '–'}</div>
             <div className="k">Days to next</div>
           </div>
           <div className="stat">
-            <div className="v num">{average ?? cycle.cycleLength}</div>
+            <div className="v num">{prediction?.length ?? cycle.cycleLength}</div>
             <div className="k">Cycle length</div>
           </div>
           <div className="stat">
@@ -111,11 +133,6 @@ export function CycleScreen() {
             <div className="k">Logged</div>
           </div>
         </div>
-        {average && (
-          <p className="tiny faint center" style={{ marginTop: -6 }}>
-            Cycle length is your own average from {logs.length} logged periods, not the default.
-          </p>
-        )}
 
         {/* Settings */}
         <div className="section-title">Settings</div>
