@@ -19,6 +19,8 @@ export interface WorkoutLog {
   notes?: string;
   /** Exercises the user skipped on purpose. */
   skipped?: string[];
+  /** Library exercise ids added to this session on the day. */
+  extras?: string[];
 }
 
 export interface Measurement {

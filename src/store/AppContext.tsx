@@ -40,6 +40,8 @@ interface AppContextValue {
   addSet: (logId: string, exerciseId: string) => void;
   removeSet: (logId: string, exerciseId: string) => void;
   setLogNotes: (logId: string, notes: string) => void;
+  addExtraExercise: (logId: string, exerciseId: string, sets: number, weight: number | null) => void;
+  removeExtraExercise: (logId: string, exerciseId: string) => void;
   toggleWorkoutComplete: (logId: string) => void;
   deleteLog: (logId: string) => void;
   addMeasurement: (m: Omit<Measurement, 'id'>) => void;
@@ -171,6 +173,34 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [mapLog],
   );
 
+  const addExtraExercise = useCallback(
+    (logId: string, exerciseId: string, sets: number, weight: number | null) => {
+      mapLog(logId, (log) => {
+        if (log.extras?.includes(exerciseId)) return log;
+        return {
+          ...log,
+          extras: [...(log.extras ?? []), exerciseId],
+          entries: {
+            ...log.entries,
+            [exerciseId]: Array.from({ length: sets }, () => ({ reps: null, weight, done: false })),
+          },
+        };
+      });
+    },
+    [mapLog],
+  );
+
+  const removeExtraExercise = useCallback(
+    (logId: string, exerciseId: string) => {
+      mapLog(logId, (log) => {
+        const entries = { ...log.entries };
+        delete entries[exerciseId];
+        return { ...log, extras: (log.extras ?? []).filter((id) => id !== exerciseId), entries };
+      });
+    },
+    [mapLog],
+  );
+
   const setLogNotes = useCallback(
     (logId: string, notes: string) => mapLog(logId, (log) => ({ ...log, notes })),
     [mapLog],
@@ -248,6 +278,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addSet,
       removeSet,
       setLogNotes,
+      addExtraExercise,
+      removeExtraExercise,
       toggleWorkoutComplete,
       deleteLog,
       addMeasurement,
@@ -276,6 +308,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addSet,
       removeSet,
       setLogNotes,
+      addExtraExercise,
+      removeExtraExercise,
       toggleWorkoutComplete,
       deleteLog,
       addMeasurement,

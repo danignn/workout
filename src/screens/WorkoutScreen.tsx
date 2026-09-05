@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { getSession, PROGRAM_META, type MobilityMove } from '../data/program';
+import { EXERCISE_LIBRARY, getSession, libraryExercise, PROGRAM_META, type Exercise, type MobilityMove } from '../data/program';
+import { Sheet } from '../components/Sheet';
+import { PlusIcon, TrashIcon } from '../components/Icons';
 import { useApp } from '../store/AppContext';
 import { ExerciseCard } from '../components/ExerciseCard';
 import { CheckIcon, ChevronDown, ChevronLeft, InfoIcon } from '../components/Icons';
@@ -73,8 +75,9 @@ export function WorkoutScreen() {
   const [params] = useSearchParams();
   const date = params.get('date') ?? todayKey();
   const navigate = useNavigate();
-  const { ensureLog, getLog, setLogNotes, toggleWorkoutComplete } = useApp();
+  const { ensureLog, getLog, setLogNotes, toggleWorkoutComplete, addExtraExercise, removeExtraExercise } = useApp();
   const [playing, setPlaying] = useState<PlayRequest | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
 
   const session = getSession(sessionId);
 
@@ -87,7 +90,8 @@ export function WorkoutScreen() {
 
   const totals = useMemo(() => {
     if (!log || !session) return { done: 0, total: 0, volume: 0 };
-    const total = session.exercises.reduce((n, ex) => n + (log.entries[ex.id]?.length ?? ex.sets), 0);
+    const extras = (log.extras ?? []).map(libraryExercise).filter((e): e is Exercise => !!e);
+    const total = [...session.exercises, ...extras].reduce((n, ex) => n + (log.entries[ex.id]?.length ?? ex.sets), 0);
     return { done: setsCompleted(log), total, volume: Math.round(volumeOf(log)) };
   }, [log, session]);
 
@@ -166,6 +170,39 @@ export function WorkoutScreen() {
           })}
         </div>
 
+        {(log.extras ?? []).length > 0 && (
+          <>
+            <div className="section-title">Added by you</div>
+            <div className="stack">
+              {(log.extras ?? []).map((id, i) => {
+                const ex = libraryExercise(id);
+                if (!ex) return null;
+                return (
+                  <div key={id} className="stack-sm">
+                    <ExerciseCard
+                      exercise={ex}
+                      index={session.exercises.length + i}
+                      log={log}
+                      defaultOpen={false}
+                    />
+                    <button
+                      className="btn btn-danger btn-sm"
+                      style={{ alignSelf: 'flex-start' }}
+                      onClick={() => removeExtraExercise(log.id, id)}
+                    >
+                      <TrashIcon size={14} /> Remove {ex.name}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+
+        <button className="btn btn-ghost btn-block" onClick={() => setAddOpen(true)}>
+          <PlusIcon size={16} /> Add an exercise
+        </button>
+
         {session.finisher && (
           <div className="card card-flat"><p className="small muted">{session.finisher}</p></div>
         )}
@@ -210,6 +247,47 @@ export function WorkoutScreen() {
           </p>
         )}
       </div>
+
+      <Sheet open={addOpen} onClose={() => setAddOpen(false)} title="Add an exercise">
+        <div className="stack-sm">
+          <p className="small muted">
+            Everything from your own routine that did not fit in the main session. Adding one puts it at the bottom of
+            today's workout only.
+          </p>
+          {(['shoulders', 'arms', 'legs', 'glutes', 'core'] as const).map((group) => {
+            const items = EXERCISE_LIBRARY.filter((e) => e.group === group);
+            if (items.length === 0) return null;
+            return (
+              <div key={group}>
+                <div className="section-title">{group}</div>
+                <div className="stack-sm">
+                  {items.map((ex) => {
+                    const already = (log.extras ?? []).includes(ex.id);
+                    return (
+                      <button
+                        key={ex.id}
+                        className="card row"
+                        style={{ gap: 10, textAlign: 'left', opacity: already ? 0.5 : 1 }}
+                        disabled={already}
+                        onClick={() => {
+                          addExtraExercise(log.id, ex.id, ex.sets, ex.suggestedKg > 0 ? ex.suggestedKg : null);
+                          setAddOpen(false);
+                        }}
+                      >
+                        <span className="grow">
+                          <span className="bold small" style={{ display: 'block' }}>{ex.name}</span>
+                          <span className="tiny muted">{ex.sets} × {ex.repsLabel}{already ? ' · already added' : ''}</span>
+                        </span>
+                        {!already && <PlusIcon size={16} />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </Sheet>
 
       <VideoSheet request={playing} onClose={() => setPlaying(null)} />
     </>
