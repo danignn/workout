@@ -44,3 +44,9 @@ export function getPhoto(id: string): Promise<Blob | undefined> {
 export function deletePhoto(id: string): Promise<undefined> {
   return tx('readwrite', (store) => store.delete(id) as IDBRequest<undefined>);
 }
+
+/** Wipes every stored photo. Used by "Erase everything", which must not leave
+ *  orphaned image blobs sitting on the device after the metadata is gone. */
+export function clearPhotos(): Promise<undefined> {
+  return tx('readwrite', (store) => store.clear() as IDBRequest<undefined>);
+}

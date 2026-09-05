@@ -41,7 +41,11 @@ export function saveState(state: AppState): void {
 }
 
 export function exportState(state: AppState): string {
-  return JSON.stringify({ exportedAt: new Date().toISOString(), state }, null, 2);
+  // Photo blobs live in IndexedDB and are far too large for a JSON backup, so
+  // the metadata is stripped too — restoring it elsewhere would only produce
+  // tiles with no image behind them.
+  const { photos: _photos, ...rest } = state;
+  return JSON.stringify({ exportedAt: new Date().toISOString(), state: { ...rest, photos: [] } }, null, 2);
 }
 
 export function parseImport(text: string): AppState {

@@ -4,8 +4,8 @@ import { useApp, uid } from '../store/AppContext';
 import { BarChart, LineChart, type Point } from '../components/Charts';
 import { PhotoTile, compressImage } from '../components/PhotoTile';
 import { Sheet } from '../components/Sheet';
-import { CameraIcon, TrashIcon, TrophyIcon } from '../components/Icons';
-import { deletePhoto, putPhoto } from '../store/idb';
+import { CameraIcon, DownloadIcon, TrashIcon, TrophyIcon } from '../components/Icons';
+import { deletePhoto, getPhoto, putPhoto } from '../store/idb';
 import { addDays, formatShort, todayKey, weekOf } from '../utils/date';
 import { historyFor, personalBest } from '../utils/progression';
 import { formatVolume, totalVolume, volumeOf } from '../utils/stats';
@@ -76,6 +76,19 @@ export function ProgressScreen() {
       setBusy(false);
       if (fileRef.current) fileRef.current.value = '';
     }
+  };
+
+  // Photos are the one thing a JSON backup cannot carry, so give her a way to
+  // get them off the device and into her camera roll.
+  const onSavePhoto = async (photo: PhotoMeta) => {
+    const blob = await getPhoto(photo.id);
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `bloom-${photo.angle}-${photo.date}.jpg`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const onDeletePhoto = async (id: string) => {
@@ -274,6 +287,12 @@ export function ProgressScreen() {
             <div style={{ borderRadius: 'var(--r-lg)', overflow: 'hidden' }}>
               <PhotoTile photo={viewing} />
             </div>
+            <button className="btn btn-ghost btn-block" onClick={() => onSavePhoto(viewing)}>
+              <DownloadIcon size={16} /> Save to my device
+            </button>
+            <p className="tiny faint center">
+              Saves a copy to your camera roll or downloads. Backups do not include photos, so save any you want to keep for good.
+            </p>
             <button className="btn btn-danger btn-block" onClick={() => onDeletePhoto(viewing.id)}>
               <TrashIcon size={16} /> Delete photo
             </button>

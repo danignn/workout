@@ -3,6 +3,7 @@ import { useApp } from '../store/AppContext';
 import { Sheet } from '../components/Sheet';
 import { DownloadIcon, InfoIcon, UploadIcon } from '../components/Icons';
 import { exportState, parseImport } from '../store/storage';
+import { clearPhotos } from '../store/idb';
 import { proteinTargetFor } from '../data/meals';
 import { currentPhase, nextPeriodIn } from '../utils/cycle';
 import { todayKey } from '../utils/date';
@@ -39,7 +40,8 @@ export function MeScreen() {
     try {
       const next = parseImport(await file.text());
       if (!confirm('This replaces everything currently in the app with the backup. Continue?')) return;
-      replaceState(next);
+      // Photos are not part of a backup file, so keep the ones already on this device.
+      replaceState({ ...next, photos: state.photos });
       flash('Backup restored');
     } catch (err) {
       alert(err instanceof Error ? err.message : 'That file could not be read.');
@@ -48,8 +50,9 @@ export function MeScreen() {
     }
   };
 
-  const doReset = () => {
-    if (!confirm('Erase all workouts, meals, measurements and settings? This cannot be undone.')) return;
+  const doReset = async () => {
+    if (!confirm('Erase all workouts, meals, measurements, photos and settings? This cannot be undone.')) return;
+    await clearPhotos().catch(() => undefined);
     replaceState(initialState());
     flash('Everything cleared');
   };
@@ -156,7 +159,7 @@ export function MeScreen() {
           <button className="link-row" onClick={doExport}>
             <span className="grow">
               <span className="small bold" style={{ display: 'block' }}>Download a backup</span>
-              <span className="tiny faint">Everything except photos, as a file you can keep</span>
+              <span className="tiny faint">Workouts, meals, measurements and settings. Photos are separate</span>
             </span>
             <DownloadIcon />
           </button>
@@ -227,8 +230,9 @@ export function MeScreen() {
             <strong>Download a backup every few weeks.</strong> That file restores everything onto a new phone.
           </p>
           <p className="small muted">
-            Progress photos are stored separately in the device database and are not included in the backup file, so
-            they are never uploaded anywhere.
+            Progress photos are stored separately on the device and are not included in the backup file. To keep one
+            for good, open it in Progress → Photos and tap <strong>Save to my device</strong>, which puts it in your
+            normal camera roll or downloads.
           </p>
           <div className="card card-flat">
             <p className="tiny muted">
