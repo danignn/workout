@@ -1,4 +1,10 @@
 import { useRef, useState } from 'react';
+import { PALETTES, MASCOTS } from '../data/themes';
+import { MascotPreview } from '../components/Mascot';
+import { putPhoto } from '../store/idb';
+import { compressImage } from '../components/PhotoTile';
+import { startDayLabel } from '../utils/schedule';
+import { uid } from '../store/AppContext';
 import { useApp } from '../store/AppContext';
 import { Sheet } from '../components/Sheet';
 import { DownloadIcon, InfoIcon, UploadIcon } from '../components/Icons';
@@ -10,7 +16,8 @@ import { todayKey } from '../utils/date';
 import { initialState } from '../store/types';
 
 export function MeScreen() {
-  const { state, updateProfile, updateSettings, updateCycle, replaceState } = useApp();
+  const { state, updateProfile, updateSettings, updateCycle, updateSchedule, updateTheme, replaceState } = useApp();
+  const mascotFileRef = useRef<HTMLInputElement>(null);
   const [installOpen, setInstallOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -94,6 +101,123 @@ export function MeScreen() {
               <label htmlFor="p-steps">Step goal</label>
               <input id="p-steps" className="input" type="number" inputMode="numeric" value={state.profile.stepTarget} onChange={(e) => updateProfile({ stepTarget: Number(e.target.value) || 0 })} />
             </div>
+          </div>
+        </div>
+
+        <div className="section-title">Programme</div>
+        <div className="card stack-sm">
+          <div className="field">
+            <label htmlFor="p-start">First day of the programme</label>
+            <input
+              id="p-start"
+              className="input"
+              type="date"
+              value={state.schedule.startDate}
+              onChange={(e) => e.target.value && updateSchedule({ startDate: e.target.value })}
+            />
+          </div>
+          <p className="tiny faint">
+            The 7-day cycle hangs off this date, so you can start on any day of the week. Right now you start on a{' '}
+            <strong>{startDayLabel(state.schedule.startDate)}</strong>: Lower A, then Upper, rest, Lower B, rest,
+            Full Body, rest. Your two leg days stay 72 hours apart whichever day you pick.
+          </p>
+          <button className="btn btn-soft btn-sm" onClick={() => updateSchedule({ startDate: todayKey() })}>
+            Restart the cycle from today
+          </button>
+        </div>
+
+        <div className="section-title">Look & feel</div>
+        <div className="card stack-sm">
+          <div>
+            <span className="small bold" style={{ display: 'block', marginBottom: 8 }}>Colour</span>
+            <div className="swatch-row">
+              {PALETTES.map((p) => (
+                <button
+                  key={p.id}
+                  className={`swatch${state.theme.palette === p.id ? ' active' : ''}`}
+                  style={{ background: p.swatch }}
+                  onClick={() => updateTheme({ palette: p.id })}
+                  aria-pressed={state.theme.palette === p.id}
+                >
+                  {p.label.split(' ')[0]}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="divider" />
+
+          <div>
+            <span className="small bold" style={{ display: 'block', marginBottom: 8 }}>Floating friend</span>
+            <div className="mascot-grid">
+              {MASCOTS.map((m) => (
+                <button
+                  key={m.id}
+                  className={`mascot-option${state.theme.mascot === m.id ? ' active' : ''}`}
+                  onClick={() => {
+                    if (m.id === 'custom' && !state.theme.customMascotId) {
+                      mascotFileRef.current?.click();
+                      return;
+                    }
+                    updateTheme({ mascot: m.id });
+                  }}
+                  aria-pressed={state.theme.mascot === m.id}
+                >
+                  {m.id === 'none' ? (
+                    <span style={{ fontSize: 20 }}>🚫</span>
+                  ) : m.id === 'custom' && !state.theme.customMascotId ? (
+                    <span style={{ fontSize: 20 }}>🖼️</span>
+                  ) : (
+                    <MascotPreview id={m.id} customId={state.theme.customMascotId} />
+                  )}
+                  <span className="lbl">{m.label}</span>
+                </button>
+              ))}
+            </div>
+            <input
+              ref={mascotFileRef}
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                try {
+                  const { blob } = await compressImage(file, 160);
+                  const id = uid();
+                  await putPhoto(id, blob);
+                  updateTheme({ mascot: 'custom', customMascotId: id });
+                  flash('Mascot updated');
+                } catch {
+                  alert('That image could not be used.');
+                } finally {
+                  if (mascotFileRef.current) mascotFileRef.current.value = '';
+                }
+              }}
+            />
+            <button className="btn btn-soft btn-sm btn-block" style={{ marginTop: 8 }} onClick={() => mascotFileRef.current?.click()}>
+              Use my own picture
+            </button>
+            <p className="tiny faint" style={{ marginTop: 6 }}>
+              Pick any image saved on your phone — a sticker, a character, a photo. It stays on your device.
+            </p>
+          </div>
+
+          <div className="divider" />
+
+          <div className="row-between">
+            <span className="small bold">How busy it flies</span>
+            <select
+              className="input"
+              style={{ maxWidth: 130 }}
+              value={state.theme.mascotSpeed}
+              onChange={(e) => updateTheme({ mascotSpeed: e.target.value as 'calm' | 'normal' | 'lively' })}
+              aria-label="Mascot speed"
+            >
+              <option value="calm">Calm</option>
+              <option value="normal">Normal</option>
+              <option value="lively">Lively</option>
+            </select>
           </div>
         </div>
 

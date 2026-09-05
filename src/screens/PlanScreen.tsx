@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { HONEST_NOTES, PROGRAM_META, REST_DAYS, REST_RULES, REST_BETWEEN_EXERCISES, SESSIONS } from '../data/program';
-import { ALL_VIDEOS, type VideoRef } from '../data/videos';
+import { HONEST_NOTES, PROGRAM_META, REST_DAY_BY_OFFSET, REST_RULES, REST_BETWEEN_EXERCISES, SESSION_BY_OFFSET } from '../data/program';
+import { ALL_VIDEOS } from '../data/videos';
 import { useApp } from '../store/AppContext';
-import { VideoButton, VideoSheet } from '../components/VideoSheet';
-import { CheckIcon, ChevronRight, InfoIcon } from '../components/Icons';
-import { addDays, fromKey, todayKey, weekOf } from '../utils/date';
+import { CheckIcon, ChevronLeft, ChevronRight, InfoIcon } from '../components/Icons';
+import { addDays, formatShort, fromKey, todayKey } from '../utils/date';
+import { cycleWeekOf, cycleOffset, legDaySpacingHours, weekNumber } from '../utils/schedule';
 
 type Tab = 'week' | 'rules' | 'videos' | 'notes';
 
@@ -13,11 +13,12 @@ export function PlanScreen() {
   const { state } = useApp();
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>('week');
-  const [video, setVideo] = useState<VideoRef | null>(null);
   const today = todayKey();
-  const week = weekOf(today);
-
-  const dateForDay = (dayOfWeek: number) => week[(dayOfWeek + 6) % 7];
+  const start = state.schedule.startDate;
+  // Which programme week the user is looking at; 0 is the current one.
+  const [weekShift, setWeekShift] = useState(0);
+  const anchor = addDays(today, weekShift * 7);
+  const week = cycleWeekOf(start, anchor);
 
   return (
     <>
@@ -43,31 +44,45 @@ export function PlanScreen() {
 
         {tab === 'week' && (
           <div className="stack">
-            {[1, 2, 3, 4, 5, 6, 0].map((dow) => {
-              const session = SESSIONS.find((s) => s.dayOfWeek === dow);
-              const rest = REST_DAYS.find((r) => r.dayOfWeek === dow);
-              const date = dateForDay(dow);
+            <div className="row-between">
+              <button className="icon-btn" onClick={() => setWeekShift((w) => w - 1)} aria-label="Previous week">
+                <ChevronLeft size={18} />
+              </button>
+              <span className="small bold">
+                Week {weekNumber(start, anchor)}
+                <span className="faint" style={{ fontWeight: 500 }}> · {formatShort(week[0])} – {formatShort(week[6])}</span>
+              </span>
+              <button className="icon-btn" onClick={() => setWeekShift((w) => w + 1)} aria-label="Next week">
+                <ChevronRight size={18} />
+              </button>
+            </div>
+
+            {week.map((date) => {
+              const offset = cycleOffset(start, date);
+              const session = offset === null ? undefined : SESSION_BY_OFFSET[offset];
+              const rest = offset === null ? undefined : REST_DAY_BY_OFFSET[offset];
               const isToday = date === today;
               const done = state.workouts.some((w) => w.date === date && w.completed);
+              const dayLabel = fromKey(date).toLocaleDateString(undefined, { weekday: 'short' });
 
               if (session) {
                 return (
                   <button
-                    key={dow}
+                    key={date}
                     className="card row"
                     style={{ gap: 12, textAlign: 'left', borderColor: isToday ? 'var(--pink-300)' : undefined }}
                     onClick={() => navigate(`/workout/${session.id}?date=${date}`)}
                   >
                     <span
                       style={{
-                        width: 44, height: 44, borderRadius: 14, flexShrink: 0,
-                        background: done ? 'var(--pink-500)' : `${session.accent}22`,
+                        width: 46, height: 46, borderRadius: 15, flexShrink: 0,
+                        background: done ? 'var(--pink-500)' : `${session.accent}2e`,
                         color: done ? '#fff' : session.accent,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontWeight: 800, fontSize: 13,
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                        fontWeight: 800, fontSize: 11, lineHeight: 1.15,
                       }}
                     >
-                      {done ? <CheckIcon size={20} /> : session.dayName.slice(0, 3)}
+                      {done ? <CheckIcon size={20} /> : (<><span>{dayLabel}</span><span style={{ fontSize: 13 }}>{fromKey(date).getDate()}</span></>)}
                     </span>
                     <span className="grow">
                       <span className="bold" style={{ display: 'block' }}>
@@ -81,22 +96,22 @@ export function PlanScreen() {
               }
 
               return (
-                <div key={dow} className="card card-flat row" style={{ gap: 12, borderColor: isToday ? 'var(--pink-300)' : undefined }}>
+                <div key={date} className="card card-flat row" style={{ gap: 12, borderColor: isToday ? 'var(--pink-300)' : undefined }}>
                   <span
                     style={{
-                      width: 44, height: 44, borderRadius: 14, flexShrink: 0,
-                      background: '#f2eafb', color: '#7b52ad',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontWeight: 800, fontSize: 13,
+                      width: 46, height: 46, borderRadius: 15, flexShrink: 0,
+                      background: 'var(--pink-50)', color: 'var(--pink-600)',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                      fontWeight: 800, fontSize: 11, lineHeight: 1.15,
                     }}
                   >
-                    {rest?.dayName.slice(0, 3)}
+                    <span>{dayLabel}</span><span style={{ fontSize: 13 }}>{fromKey(date).getDate()}</span>
                   </span>
                   <span className="grow">
                     <span className="bold small" style={{ display: 'block' }}>
-                      {rest?.label} {isToday && <span className="pill" style={{ marginLeft: 6 }}>Today</span>}
+                      {rest?.label ?? 'Before start'} {isToday && <span className="pill" style={{ marginLeft: 6 }}>Today</span>}
                     </span>
-                    <span className="tiny muted">{rest?.note}</span>
+                    <span className="tiny muted">{rest?.note ?? 'Your programme had not started yet on this day.'}</span>
                   </span>
                 </div>
               );
@@ -104,18 +119,16 @@ export function PlanScreen() {
 
             <div className="card card-flat card-tight row" style={{ gap: 10, alignItems: 'flex-start' }}>
               <span style={{ color: 'var(--pink-500)', flexShrink: 0, marginTop: 1 }}><InfoIcon size={16} /></span>
-              <span className="small muted">{PROGRAM_META.spacingNote}</span>
+              <span className="small muted">
+                Your cycle starts on a {fromKey(start).toLocaleDateString(undefined, { weekday: 'long' })} and repeats every
+                7 days, so your two leg days always land {legDaySpacingHours()} hours apart. Change the start day in Me.
+              </span>
             </div>
 
             <div className="card">
               <div className="section-title" style={{ margin: '0 0 6px' }}>Starting loads</div>
               <p className="small muted">{PROGRAM_META.startingLoads}</p>
             </div>
-
-            <p className="tiny faint center">
-              Tap any past or future day to log it. Today is {fromKey(today).toLocaleDateString(undefined, { weekday: 'long' })}
-              {' · '}next week starts {fromKey(addDays(week[6], 1)).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
-            </p>
           </div>
         )}
 
@@ -159,9 +172,18 @@ export function PlanScreen() {
         {tab === 'videos' && (
           <div className="stack-sm">
             <p className="small muted" style={{ marginBottom: 6 }}>
-              Every form video referenced in your plan, all from @vera.armishaw.
+              Every form video referenced in your plan, all from @vera.armishaw. These also play inline inside each
+              exercise, and you can attach your own clips there.
             </p>
-            {ALL_VIDEOS.map((v) => <VideoButton key={v.id} video={v} onPlay={setVideo} />)}
+            {ALL_VIDEOS.map((v) => (
+              <a key={v.id} className="video-card" href={v.url} target="_blank" rel="noreferrer noopener">
+                <span className="video-thumb">▶</span>
+                <span className="grow">
+                  <span className="bold small" style={{ display: 'block' }}>{v.title}</span>
+                  <span className="tiny faint">@{v.author}</span>
+                </span>
+              </a>
+            ))}
           </div>
         )}
 
@@ -171,7 +193,15 @@ export function PlanScreen() {
               <div key={note.title} className="card stack-sm">
                 <h3>{note.title}</h3>
                 <p className="small muted">{note.body}</p>
-                {note.video && <VideoButton video={note.video} onPlay={setVideo} />}
+                {note.video && (
+                  <a className="video-card" href={note.video.url} target="_blank" rel="noreferrer noopener">
+                    <span className="video-thumb">▶</span>
+                    <span className="grow">
+                      <span className="bold small" style={{ display: 'block' }}>{note.video.title}</span>
+                      <span className="tiny faint">@{note.video.author}</span>
+                    </span>
+                  </a>
+                )}
               </div>
             ))}
             <div className="card card-flat">
@@ -182,7 +212,6 @@ export function PlanScreen() {
         )}
       </div>
 
-      <VideoSheet video={video} onClose={() => setVideo(null)} />
     </>
   );
 }

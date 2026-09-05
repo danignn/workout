@@ -25,10 +25,11 @@
   --ink-soft: #6b5a63;
   --ink-faint: #a2919b;
 
-  --bg: #fffaFC;
+  /* Defaults; overridden at runtime by the chosen palette in themes.ts. */
+  --bg: #ffffff;
   --surface: #ffffff;
-  --surface-tint: #fff5f9;
-  --line: #f6e2ec;
+  --surface-tint: #ffe5ec;
+  --line: #ffdce6;
 
   --shadow-sm: 0 1px 2px rgba(201, 79, 131, 0.06), 0 2px 8px rgba(201, 79, 131, 0.05);
   --shadow-md: 0 4px 16px rgba(201, 79, 131, 0.1);
@@ -550,3 +551,150 @@ textarea.input { resize: vertical; min-height: 76px; }
 @media (min-width: 560px) {
   .app-shell { box-shadow: 0 0 60px rgba(201, 79, 131, 0.08); }
 }
+
+
+/* ---------------- Mascot ---------------- */
+
+.mascot-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 30;
+  overflow: hidden;
+}
+.mascot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  will-change: transform;
+  filter: drop-shadow(0 3px 6px rgba(201, 69, 111, 0.22));
+}
+.mascot-glitter {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff 0%, var(--pink-300) 55%, transparent 72%);
+  animation: glitter-fade 1.4s ease-out forwards;
+}
+@keyframes glitter-fade {
+  0% { opacity: 0.95; transform: scale(1.1); }
+  100% { opacity: 0; transform: scale(0.2) translateY(10px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mascot-layer { display: none; }
+}
+
+/* ---------------- Warm-up & cool-down ---------------- */
+
+.mobility-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+.mobility-item:last-child { border-bottom: none; }
+.mobility-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--pink-300);
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+
+/* ---------------- Inline video ---------------- */
+
+.video-frame {
+  width: 100%;
+  aspect-ratio: 9 / 16;
+  max-height: 420px;
+  border: none;
+  border-radius: var(--r-md);
+  background: #000;
+  display: block;
+}
+.video-frame-wide { aspect-ratio: 16 / 9; max-height: none; }
+.video-tabs { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+
+/* ---------------- Scrollable date strip ---------------- */
+
+.date-strip {
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  padding: 2px 18px 8px;
+  margin: 0 -18px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.date-strip::-webkit-scrollbar { display: none; }
+.date-chip {
+  flex: 0 0 auto;
+  width: 50px;
+  scroll-snap-align: center;
+  border-radius: 16px;
+  padding: 9px 0 7px;
+  text-align: center;
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  transition: all 0.16s ease;
+}
+.date-chip.today { border-color: var(--pink-400); background: var(--pink-50); }
+.date-chip.selected { background: var(--pink-500); border-color: var(--pink-500); color: #fff; box-shadow: var(--shadow-md); }
+.date-chip .dow { font-size: 9.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.72; }
+.date-chip .dnum { font-size: 16px; font-weight: 800; margin-top: 1px; }
+.date-chip .tag { font-size: 8.5px; font-weight: 700; margin-top: 3px; letter-spacing: 0.03em; }
+.date-chip .dot { width: 5px; height: 5px; border-radius: 50%; margin: 3px auto 0; background: var(--line); }
+.date-chip .dot.done { background: var(--pink-500); }
+.date-chip.selected .dot.done { background: #fff; }
+
+/* ---------------- Swatches ---------------- */
+
+.swatch-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.swatch {
+  width: 52px; height: 52px;
+  border-radius: 16px;
+  border: 2px solid var(--line);
+  display: flex; align-items: flex-end; justify-content: center;
+  padding-bottom: 4px;
+  font-size: 9px; font-weight: 700; color: var(--ink-soft);
+  transition: all 0.15s ease;
+}
+.swatch.active { border-color: var(--pink-500); transform: scale(1.06); box-shadow: var(--shadow-md); }
+
+.mascot-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.mascot-option {
+  border-radius: var(--r-md);
+  border: 1.5px solid var(--line);
+  background: var(--surface);
+  padding: 12px 6px 9px;
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  min-height: 84px;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+.mascot-option.active { border-color: var(--pink-500); background: var(--pink-50); }
+.mascot-option span.lbl { font-size: 10px; font-weight: 700; color: var(--ink-soft); text-align: center; line-height: 1.25; }
+
+/* ---------------- Grocery list ---------------- */
+
+.grocery-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--line);
+  width: 100%;
+  text-align: left;
+}
+.grocery-item:last-child { border-bottom: none; }
+.grocery-item.checked .name { text-decoration: line-through; color: var(--ink-faint); }
+.grocery-check {
+  width: 24px; height: 24px; border-radius: 8px;
+  border: 2px solid var(--line);
+  display: flex; align-items: center; justify-content: center;
+  color: transparent; flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+.grocery-item.checked .grocery-check { background: var(--pink-500); border-color: var(--pink-500); color: #fff; }

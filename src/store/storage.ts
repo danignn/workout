@@ -16,10 +16,14 @@ export function loadState(): AppState {
       profile: { ...base.profile, ...parsed.profile },
       settings: { ...base.settings, ...parsed.settings },
       cycle: { ...base.cycle, ...parsed.cycle },
+      schedule: { ...base.schedule, ...parsed.schedule },
+      theme: { ...base.theme, ...parsed.theme },
+      media: parsed.media ?? {},
       workouts: parsed.workouts ?? [],
       measurements: parsed.measurements ?? [],
       photos: parsed.photos ?? [],
       meals: parsed.meals ?? {},
+      grocery: parsed.grocery ?? {},
       habits: parsed.habits ?? {},
     };
   } catch {

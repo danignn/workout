@@ -1,3 +1,5 @@
+import { todayKey } from '../utils/date';
+
 export interface LoggedSet {
   reps: number | null;
   weight: number | null;
@@ -72,6 +74,40 @@ export interface Profile {
   stepTarget: number;
 }
 
+export interface ScheduleSettings {
+  /** YYYY-MM-DD of the first training day (Lower A). The whole cycle hangs off this. */
+  startDate: string;
+}
+
+export type PaletteId = 'blush' | 'rose' | 'lilac' | 'mint' | 'butter';
+export type MascotId =
+  | 'butterfly'
+  | 'sparkle'
+  | 'heart'
+  | 'fairy'
+  | 'bunny'
+  | 'kitty'
+  | 'flower'
+  | 'custom'
+  | 'none';
+
+export interface ThemeSettings {
+  palette: PaletteId;
+  mascot: MascotId;
+  /** IndexedDB key of an image the user chose as their own mascot. */
+  customMascotId?: string;
+  /** How busy the animation is. */
+  mascotSpeed: 'calm' | 'normal' | 'lively';
+}
+
+/** A reference video the user attached to an exercise herself. */
+export interface ExerciseMedia {
+  /** A YouTube or TikTok URL she pasted in. */
+  link?: string;
+  /** IndexedDB key of a clip she recorded or picked from her camera roll. */
+  clipId?: string;
+}
+
 export interface Settings {
   restPreference: 'min' | 'max';
   vibrate: boolean;
@@ -84,15 +120,21 @@ export interface AppState {
   profile: Profile;
   settings: Settings;
   cycle: CycleSettings;
+  schedule: ScheduleSettings;
+  theme: ThemeSettings;
+  /** Keyed by exercise id. */
+  media: Record<string, ExerciseMedia>;
   workouts: WorkoutLog[];
   measurements: Measurement[];
   photos: PhotoMeta[];
   /** Keyed by YYYY-MM-DD. */
   meals: Record<string, MealLogItem[]>;
+  /** Ticked-off grocery items, keyed by item name. */
+  grocery: Record<string, boolean>;
   habits: Record<string, HabitDay>;
 }
 
-export const STATE_VERSION = 1;
+export const STATE_VERSION = 2;
 
 export const EMPTY_HABIT: HabitDay = { water: 0, steps: 0, sleepHours: 0, proteinHit: false };
 
@@ -102,10 +144,14 @@ export function initialState(): AppState {
     profile: { name: '', bodyweightKg: 60, waterTarget: 8, stepTarget: 8000 },
     settings: { restPreference: 'min', vibrate: true, sound: true, autoStartRest: true },
     cycle: { enabled: false, cycleLength: 28, periodLength: 5 },
+    schedule: { startDate: todayKey() },
+    theme: { palette: 'blush', mascot: 'butterfly', mascotSpeed: 'normal' },
+    media: {},
     workouts: [],
     measurements: [],
     photos: [],
     meals: {},
+    grocery: {},
     habits: {},
   };
 }

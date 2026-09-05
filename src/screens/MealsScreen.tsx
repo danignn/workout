@@ -1,14 +1,31 @@
 import { useMemo, useState } from 'react';
-import { MEALS, MEAL_CATEGORIES, NUTRITION_NOTES, proteinTargetFor, type Meal, type MealCategory } from '../data/meals';
+import {
+  COOKWARE_LABEL,
+  GROCERY_LIST,
+  MEALS,
+  MEAL_CATEGORIES,
+  NUTRITION_NOTES,
+  OPTIONAL_ITEMS,
+  PRICE_NOTE,
+  SUNDAY_PREP,
+  firstShopTotal,
+  stapleTotal,
+  weeklyTotal,
+  proteinTargetFor,
+  type Meal,
+  type MealCategory,
+} from '../data/meals';
 import { useApp } from '../store/AppContext';
 import { Sheet } from '../components/Sheet';
-import { CheckIcon, PlusIcon, TrashIcon } from '../components/Icons';
+import { CheckIcon, InfoIcon, PlusIcon, TrashIcon } from '../components/Icons';
 import { formatShort, todayKey } from '../utils/date';
 
-type Tab = 'ideas' | 'today' | 'notes';
+type Tab = 'ideas' | 'today' | 'grocery' | 'notes';
+
+const peso = (n: number) => `₱${n.toLocaleString()}`;
 
 export function MealsScreen() {
-  const { state, addMealLog, removeMealLog, updateHabit } = useApp();
+  const { state, addMealLog, removeMealLog, updateHabit, toggleGrocery, resetGrocery } = useApp();
   const [tab, setTab] = useState<Tab>('ideas');
   const [category, setCategory] = useState<MealCategory>('breakfast');
   const [detail, setDetail] = useState<Meal | null>(null);
@@ -22,6 +39,10 @@ export function MealsScreen() {
   const pct = Math.min(100, Math.round((proteinLogged / target) * 100));
 
   const filtered = useMemo(() => MEALS.filter((m) => m.category === category), [category]);
+  const weekly = weeklyTotal();
+  const firstShop = firstShopTotal();
+  const checkedCount = GROCERY_LIST.flatMap((s) => s.items).filter((i) => state.grocery[i.name]).length;
+  const itemCount = GROCERY_LIST.reduce((n, s) => n + s.items.length, 0);
 
   const logMeal = (meal: Meal) => {
     addMealLog(today, { mealId: meal.id, name: meal.name, protein: meal.protein, slot: meal.category });
@@ -35,7 +56,7 @@ export function MealsScreen() {
       <div className="page-header">
         <div className="eyebrow">Fuel the growth</div>
         <h1>Meals</h1>
-        <p className="sub">Protein is the priority. Aim for {target}g a day.</p>
+        <p className="sub">Filipino food, stovetop and rice cooker only. Aim for {target}g of protein a day.</p>
       </div>
 
       <div className="page stack">
@@ -48,12 +69,12 @@ export function MealsScreen() {
           <p className="tiny faint" style={{ marginTop: 8 }}>
             {proteinLogged >= target
               ? 'Target hit. That is the single most important nutrition box for glute growth.'
-              : `${target - proteinLogged}g to go. Roughly ${Math.ceil((target - proteinLogged) / 25)} more protein-led ${Math.ceil((target - proteinLogged) / 25) === 1 ? 'meal or snack' : 'meals or snacks'}.`}
+              : `${target - proteinLogged}g to go. Roughly ${Math.ceil((target - proteinLogged) / 25)} more protein-led ${Math.ceil((target - proteinLogged) / 25) === 1 ? 'meal or meryenda' : 'meals or meryenda'}.`}
           </p>
         </div>
 
         <div className="chip-row">
-          {([['ideas', 'Meal ideas'], ['today', `Today (${logged.length})`], ['notes', 'Nutrition']] as [Tab, string][]).map(([id, label]) => (
+          {([['ideas', 'Meal ideas'], ['today', `Today (${logged.length})`], ['grocery', 'Grocery & prep'], ['notes', 'Nutrition']] as [Tab, string][]).map(([id, label]) => (
             <button key={id} className={`chip${tab === id ? ' active' : ''}`} onClick={() => setTab(id)}>{label}</button>
           ))}
         </div>
@@ -71,9 +92,11 @@ export function MealsScreen() {
               <button key={meal.id} className="card row" style={{ gap: 12, textAlign: 'left' }} onClick={() => setDetail(meal)}>
                 <span className="grow">
                   <span className="bold" style={{ display: 'block' }}>{meal.name}</span>
-                  <span className="tiny muted">{meal.minutes} min · {meal.calories} kcal · {meal.tags.slice(0, 2).join(', ')}</span>
+                  <span className="tiny muted">
+                    {meal.minutes} min · {COOKWARE_LABEL[meal.cookware]} · {meal.calories} kcal
+                  </span>
                 </span>
-                <span className="pill">{meal.protein}g protein</span>
+                <span className="pill">{meal.protein}g</span>
               </button>
             ))}
           </div>
@@ -87,7 +110,7 @@ export function MealsScreen() {
 
             {logged.length === 0 ? (
               <div className="empty-state">
-                <span className="emoji">🍓</span>
+                <span className="emoji">🍚</span>
                 Nothing logged yet today. Tap a meal idea to add it, or log your own.
               </div>
             ) : (
@@ -120,8 +143,109 @@ export function MealsScreen() {
                 {state.habits[today]?.proteinHit ? 'Protein target marked hit' : 'Mark protein target hit'}
               </button>
             )}
+            <p className="tiny faint center">Showing {formatShort(today)}.</p>
+          </div>
+        )}
 
-            <p className="tiny faint center">Showing {formatShort(today)}. Yesterday’s log stays saved, it just is not shown here.</p>
+        {tab === 'grocery' && (
+          <div className="stack">
+            <div className="card">
+              <div className="row-between">
+                <span className="grow">
+                  <span className="bold" style={{ display: 'block' }}>Sunday grocery run</span>
+                  <span className="tiny muted">{checkedCount} of {itemCount} items · about {peso(weekly)} a week</span>
+                </span>
+                <button className="btn btn-soft btn-sm" onClick={resetGrocery}>Reset</button>
+              </div>
+              <div className="bar-track" style={{ marginTop: 10 }}>
+                <div className="bar-fill" style={{ width: `${itemCount ? (checkedCount / itemCount) * 100 : 0}%` }} />
+              </div>
+            </div>
+
+            <div className="card card-flat stack-sm">
+              <div className="row-between">
+                <span className="small">Fresh food, every week</span>
+                <span className="small bold num">{peso(weekly)}</span>
+              </div>
+              <div className="row-between">
+                <span className="small muted">Pantry staples, first shop only</span>
+                <span className="small muted num">{peso(stapleTotal())}</span>
+              </div>
+              <div className="divider" style={{ margin: '2px 0' }} />
+              <div className="row-between">
+                <span className="small bold">First shop, buying everything</span>
+                <span className="small bold num">{peso(firstShop)}</span>
+              </div>
+            </div>
+
+            <div className="card card-flat card-tight row" style={{ gap: 10, alignItems: 'flex-start' }}>
+              <span style={{ color: 'var(--pink-500)', flexShrink: 0, marginTop: 1 }}><InfoIcon size={16} /></span>
+              <span className="tiny muted">{PRICE_NOTE}</span>
+            </div>
+
+            {GROCERY_LIST.map((section) => (
+              <div key={section.id} className="card">
+                <div className="row-between" style={{ marginBottom: 4 }}>
+                  <span className="bold small">{section.emoji} {section.label}</span>
+                  <span className="pill pill-outline">{peso(section.items.reduce((n, i) => n + i.price, 0))}</span>
+                </div>
+                <p className="tiny faint" style={{ marginBottom: 4 }}>{section.aisle}</p>
+                {section.items.map((item) => {
+                  const checked = !!state.grocery[item.name];
+                  return (
+                    <button
+                      key={item.name}
+                      className={`grocery-item${checked ? ' checked' : ''}`}
+                      onClick={() => toggleGrocery(item.name)}
+                      aria-pressed={checked}
+                    >
+                      <span className="grocery-check"><CheckIcon size={15} /></span>
+                      <span className="grow">
+                        <span className="small bold name" style={{ display: 'block' }}>{item.name}</span>
+                        <span className="tiny faint">
+                          {item.qty}{item.staple ? ' · staple, lasts a month+' : ''}{item.note ? ` · ${item.note}` : ''}
+                        </span>
+                      </span>
+                      <span className="small muted num">{peso(item.price)}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
+
+            <div className="card">
+              <div className="section-title" style={{ margin: '0 0 6px' }}>Optional</div>
+              {OPTIONAL_ITEMS.map((item) => (
+                <button
+                  key={item.name}
+                  className={`grocery-item${state.grocery[item.name] ? ' checked' : ''}`}
+                  onClick={() => toggleGrocery(item.name)}
+                  aria-pressed={!!state.grocery[item.name]}
+                >
+                  <span className="grocery-check"><CheckIcon size={15} /></span>
+                  <span className="grow">
+                    <span className="small bold name" style={{ display: 'block' }}>{item.name}</span>
+                    <span className="tiny faint">{item.qty} · {item.note}</span>
+                  </span>
+                  <span className="small muted num">{peso(item.price)}</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="section-title">Sunday prep, about 2 hours</div>
+            <div className="card">
+              {SUNDAY_PREP.map((step) => (
+                <div className="mobility-item" key={step.order}>
+                  <span className="exercise-num" style={{ width: 26, height: 26, fontSize: 12, borderRadius: 9 }}>{step.order}</span>
+                  <span className="grow">
+                    <span className="small bold" style={{ display: 'block' }}>
+                      {step.title} <span className="muted" style={{ fontWeight: 500 }}>· {step.minutes} min</span>
+                    </span>
+                    <span className="tiny muted">{step.detail}</span>
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
@@ -151,18 +275,24 @@ export function MealsScreen() {
               <span className="pill">{detail.protein}g protein</span>
               <span className="pill pill-outline">{detail.calories} kcal</span>
               <span className="pill pill-outline">{detail.minutes} min</span>
+              <span className="pill pill-lilac">{COOKWARE_LABEL[detail.cookware]}</span>
               {detail.tags.map((t) => <span key={t} className="pill pill-mint">{t}</span>)}
             </div>
             <div>
-              <div className="section-title" style={{ marginTop: 4 }}>Ingredients</div>
+              <div className="section-title" style={{ marginTop: 4 }}>Sangkap</div>
               <ul className="cue-list">
                 {detail.ingredients.map((i) => <li key={i}>{i}</li>)}
               </ul>
             </div>
             <div>
-              <div className="section-title">Method</div>
+              <div className="section-title">Paano lutuin</div>
               <p className="small muted">{detail.method}</p>
             </div>
+            {detail.prepAhead && (
+              <div className="card card-flat card-tight">
+                <p className="tiny muted"><strong>Meal prep:</strong> {detail.prepAhead}</p>
+              </div>
+            )}
             <button className="btn btn-block" onClick={() => logMeal(detail)}>
               <PlusIcon size={16} /> Log this for today
             </button>
@@ -173,10 +303,7 @@ export function MealsScreen() {
       <CustomMealSheet
         open={customOpen}
         onClose={() => setCustomOpen(false)}
-        onSave={(item) => {
-          addMealLog(today, item);
-          setCustomOpen(false);
-        }}
+        onSave={(item) => { addMealLog(today, item); setCustomOpen(false); }}
       />
 
       {toast && <div className="toast">{toast}</div>}
@@ -185,9 +312,7 @@ export function MealsScreen() {
 }
 
 function CustomMealSheet({
-  open,
-  onClose,
-  onSave,
+  open, onClose, onSave,
 }: {
   open: boolean;
   onClose: () => void;
@@ -208,8 +333,8 @@ function CustomMealSheet({
     <Sheet open={open} onClose={onClose} title="Log your own">
       <div className="stack">
         <div className="field">
-          <label htmlFor="c-name">What did you eat?</label>
-          <input id="c-name" className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="Chicken shawarma wrap" />
+          <label htmlFor="c-name">Ano ang kinain mo?</label>
+          <input id="c-name" className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="Chicken inasal, 1 cup rice" />
         </div>
         <div className="field">
           <label htmlFor="c-protein">Protein (g, estimate is fine)</label>

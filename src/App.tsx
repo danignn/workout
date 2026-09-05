@@ -3,6 +3,8 @@ import { useEffect } from 'react';
 import { AppProvider } from './store/AppContext';
 import { RestTimerProvider } from './components/RestTimer';
 import { TabBar } from './components/TabBar';
+import { ThemeApplier } from './components/ThemeApplier';
+import { Mascot } from './components/Mascot';
 import { TodayScreen } from './screens/TodayScreen';
 import { PlanScreen } from './screens/PlanScreen';
 import { WorkoutScreen } from './screens/WorkoutScreen';
@@ -22,6 +24,7 @@ export default function App() {
   return (
     <HashRouter>
       <AppProvider>
+        <ThemeApplier />
         <RestTimerProvider>
           <div className="app-shell">
             <ScrollToTop />
@@ -36,6 +39,7 @@ export default function App() {
             </Routes>
             <TabBar />
           </div>
+          <Mascot />
         </RestTimerProvider>
       </AppProvider>
     </HashRouter>

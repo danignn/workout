@@ -1,13 +1,54 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { getSession, PROGRAM_META } from '../data/program';
-import type { VideoRef } from '../data/videos';
+import { getSession, PROGRAM_META, type MobilityMove } from '../data/program';
 import { useApp } from '../store/AppContext';
 import { ExerciseCard } from '../components/ExerciseCard';
-import { VideoSheet } from '../components/VideoSheet';
-import { CheckIcon, ChevronLeft, InfoIcon } from '../components/Icons';
+import { CheckIcon, ChevronDown, ChevronLeft, InfoIcon } from '../components/Icons';
 import { formatLong, todayKey } from '../utils/date';
 import { setsCompleted, volumeOf } from '../utils/stats';
+
+function MobilityBlock({
+  title,
+  blurb,
+  moves,
+  defaultOpen,
+}: {
+  title: string;
+  blurb: string;
+  moves: MobilityMove[];
+  defaultOpen: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="card exercise-card">
+      <button className="exercise-head" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
+        <span className="grow">
+          <span className="bold" style={{ display: 'block' }}>{title}</span>
+          <span className="tiny muted">{moves.length} moves · about 5 min</span>
+        </span>
+        <span style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease', color: 'var(--ink-faint)', display: 'flex' }}>
+          <ChevronDown />
+        </span>
+      </button>
+      {open && (
+        <div className="exercise-body">
+          <p className="small muted" style={{ marginBottom: 6 }}>{blurb}</p>
+          {moves.map((m) => (
+            <div className="mobility-item" key={m.name + m.prescription}>
+              <span className="mobility-dot" />
+              <span className="grow">
+                <span className="small bold" style={{ display: 'block' }}>
+                  {m.name} <span className="muted" style={{ fontWeight: 500 }}>· {m.prescription}</span>
+                </span>
+                {m.note && <span className="tiny muted">{m.note}</span>}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function WorkoutScreen() {
   const { sessionId = '' } = useParams();
@@ -15,13 +56,11 @@ export function WorkoutScreen() {
   const date = params.get('date') ?? todayKey();
   const navigate = useNavigate();
   const { ensureLog, getLog, setLogNotes, toggleWorkoutComplete } = useApp();
-  const [video, setVideo] = useState<VideoRef | null>(null);
 
   const session = getSession(sessionId);
 
   useEffect(() => {
     if (session) ensureLog(sessionId, date);
-    // ensureLog is stable per state.workouts change; running on id/date is enough.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, date, session]);
 
@@ -34,15 +73,12 @@ export function WorkoutScreen() {
   }, [log, session]);
 
   if (!session) {
-    return (
-      <div className="page">
-        <p className="muted">That session could not be found.</p>
-      </div>
-    );
+    return <div className="page"><p className="muted">That session could not be found.</p></div>;
   }
   if (!log) return <div className="page" />;
 
   const pct = totals.total > 0 ? Math.round((totals.done / totals.total) * 100) : 0;
+  const allSetsDone = totals.total > 0 && totals.done === totals.total;
 
   return (
     <>
@@ -50,7 +86,7 @@ export function WorkoutScreen() {
         <button className="icon-btn" onClick={() => navigate(-1)} aria-label="Go back" style={{ marginBottom: 10 }}>
           <ChevronLeft />
         </button>
-        <div className="eyebrow">{session.dayName} · {session.subtitle}</div>
+        <div className="eyebrow">{session.subtitle}</div>
         <h1>{session.title}</h1>
         <p className="sub">{formatLong(date)}</p>
       </div>
@@ -71,14 +107,13 @@ export function WorkoutScreen() {
           </div>
         )}
 
-        {session.warmup && (
-          <div className="card">
-            <div className="section-title" style={{ margin: '0 0 8px' }}>Warm-up</div>
-            <ul className="cue-list">
-              {session.warmup.map((w) => <li key={w}>{w}</li>)}
-            </ul>
-          </div>
-        )}
+        <div className="section-title">Warm-up first</div>
+        <MobilityBlock
+          title="Warm-up"
+          blurb="Do this before your first working set. It is what makes set one feel like set three instead of a warm-up in disguise."
+          moves={session.warmup}
+          defaultOpen={totals.done === 0}
+        />
 
         <div className="section-title">Exercises</div>
         <div className="stack">
@@ -95,7 +130,6 @@ export function WorkoutScreen() {
                 exercise={ex}
                 index={i}
                 log={log}
-                onPlayVideo={setVideo}
                 defaultOpen={!exDone && i === (firstIncomplete === -1 ? 0 : firstIncomplete)}
               />
             );
@@ -103,10 +137,16 @@ export function WorkoutScreen() {
         </div>
 
         {session.finisher && (
-          <div className="card card-flat">
-            <p className="small muted">{session.finisher}</p>
-          </div>
+          <div className="card card-flat"><p className="small muted">{session.finisher}</p></div>
         )}
+
+        <div className="section-title">Cool-down</div>
+        <MobilityBlock
+          title="Cool-down stretches"
+          blurb="Five minutes here is what stops you walking down stairs sideways tomorrow. Breathe out into each stretch, never bounce."
+          moves={session.cooldown}
+          defaultOpen={allSetsDone}
+        />
 
         <div className="section-title">How did it go?</div>
         <div className="card stack-sm">
@@ -138,8 +178,6 @@ export function WorkoutScreen() {
           </p>
         )}
       </div>
-
-      <VideoSheet video={video} onClose={() => setVideo(null)} />
     </>
   );
 }

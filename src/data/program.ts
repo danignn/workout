@@ -59,37 +59,93 @@ export interface Exercise {
   videos?: VideoRef[];
 }
 
+export interface MobilityMove {
+  name: string;
+  prescription: string;
+  note?: string;
+}
+
 export interface Session {
   id: string;
-  /** 0 = Sunday, matching Date.getDay(). */
-  dayOfWeek: number;
-  dayName: string;
+  /**
+   * Position in the 7-day cycle, counted from whichever day you start the
+   * programme. 0 is your first training day. This is what lets the plan begin
+   * on a Tuesday without collapsing the 48-72 hour gap between leg days.
+   */
+  dayOffset: number;
   title: string;
   subtitle: string;
   kind: 'lower' | 'upper' | 'full' | 'rest';
   accent: string;
   intro?: string;
-  warmup?: string[];
+  warmup: MobilityMove[];
+  cooldown: MobilityMove[];
   exercises: Exercise[];
   finisher?: string;
 }
 
-const GLUTE_WARMUP = [
-  '10 bodyweight glute bridges',
-  '15 banded side steps each direction',
-  '10 bodyweight squats',
+/**
+ * The three moves the written plan specifies, plus a pulse-raiser before them
+ * and leg swings after, which is what makes the first working set feel like the
+ * third one instead of a warm-up in disguise.
+ */
+const GLUTE_WARMUP: MobilityMove[] = [
+  { name: 'Incline walk or march on the spot', prescription: '5 min', note: 'Just enough to feel warm and breathe a little harder. Do not skip this to save time.' },
+  { name: 'Bodyweight glute bridges', prescription: '10 reps', note: 'Squeeze at the top. This is the wake-up call for the muscle you are about to train.' },
+  { name: 'Banded side steps', prescription: '15 each direction', note: 'Band above the knees, small bend in the knees, stay low the whole way.' },
+  { name: 'Bodyweight squats', prescription: '10 reps', note: 'Slow, full depth, grooving the pattern before you add the bar.' },
+  { name: 'Leg swings', prescription: '10 each leg, front to back', note: 'Hold something for balance. Opens the hip before you load it.' },
+];
+
+const LOWER_COOLDOWN: MobilityMove[] = [
+  { name: 'Figure-4 glute stretch', prescription: '30 sec each side', note: 'Lying on your back, ankle over the opposite knee, pull the thigh toward you.' },
+  { name: 'Standing forward fold', prescription: '40 sec', note: 'Soft knees. Let your head hang, this is for the hamstrings and lower back.' },
+  { name: 'Kneeling hip flexor stretch', prescription: '30 sec each side', note: 'Tuck the pelvis under before you lean forward, otherwise you stretch your lower back instead.' },
+  { name: 'Standing quad stretch', prescription: '30 sec each side', note: 'Knees together, push the hip forward.' },
+  { name: "Child's pose", prescription: '45 sec', note: 'Knees wide, hips back to the heels, breathe into your lower back.' },
+];
+
+const UPPER_WARMUP: MobilityMove[] = [
+  { name: 'Arm circles', prescription: '15 forward, 15 back', note: 'Start small and grow them.' },
+  { name: 'Band pull-aparts', prescription: '15 reps', note: 'Straight arms, squeeze the shoulder blades. Wakes up the upper back for posture work.' },
+  { name: 'Scapular pulls', prescription: '10 reps', note: 'Hanging or on the lat pulldown, move only the shoulder blades, arms stay straight.' },
+  { name: 'Cat-cow', prescription: '8 slow rounds', note: 'Warms the spine before you press overhead.' },
+];
+
+const UPPER_COOLDOWN: MobilityMove[] = [
+  { name: 'Doorway chest stretch', prescription: '30 sec each side', note: 'Forearm on the frame, step through gently. This is the one that undoes desk posture.' },
+  { name: 'Cross-body shoulder stretch', prescription: '30 sec each side' },
+  { name: 'Overhead lat stretch', prescription: '30 sec each side', note: 'Hold something above you, sink the hips back.' },
+  { name: 'Neck side stretch', prescription: '20 sec each side', note: 'Ear toward shoulder, no pulling hard.' },
+  { name: 'Cat-cow', prescription: '8 slow rounds' },
+];
+
+const FULL_WARMUP: MobilityMove[] = [
+  { name: 'Light cardio', prescription: '5 min', note: 'Bike, walk or march. Warm before you touch a weight.' },
+  { name: 'Bodyweight glute bridges', prescription: '10 reps' },
+  { name: "World's greatest stretch", prescription: '5 each side', note: 'Lunge, elbow to the inside of the foot, then rotate the top arm to the ceiling.' },
+  { name: 'Arm circles', prescription: '15 forward, 15 back' },
+  { name: 'Bodyweight squats', prescription: '10 reps' },
+];
+
+const FULL_COOLDOWN: MobilityMove[] = [
+  { name: 'Figure-4 glute stretch', prescription: '30 sec each side' },
+  { name: 'Standing forward fold', prescription: '40 sec' },
+  { name: 'Doorway chest stretch', prescription: '30 sec each side' },
+  { name: 'Kneeling hip flexor stretch', prescription: '30 sec each side' },
+  { name: "Child's pose", prescription: '45 sec' },
 ];
 
 export const SESSIONS: Session[] = [
   {
     id: 'lower-a',
-    dayOfWeek: 1,
-    dayName: 'Monday',
+    dayOffset: 0,
     title: 'Lower A',
     subtitle: 'Glute focus',
     kind: 'lower',
-    accent: '#F49AC1',
+    accent: '#f48fb1',
     warmup: GLUTE_WARMUP,
+    cooldown: LOWER_COOLDOWN,
     exercises: [
       {
         id: 'barbell-squat',
@@ -190,12 +246,13 @@ export const SESSIONS: Session[] = [
   },
   {
     id: 'upper-core',
-    dayOfWeek: 2,
-    dayName: 'Tuesday',
+    dayOffset: 1,
     title: 'Upper + Core',
     subtitle: 'Posture & the hourglass line',
     kind: 'upper',
-    accent: '#C9A7E8',
+    accent: '#c8a2e0',
+    warmup: UPPER_WARMUP,
+    cooldown: UPPER_COOLDOWN,
     intro:
       'Keep loads light and reps moderate. This session is for posture, shoulder shape and the hourglass line, not size.',
     exercises: [
@@ -280,13 +337,13 @@ export const SESSIONS: Session[] = [
   },
   {
     id: 'lower-b',
-    dayOfWeek: 4,
-    dayName: 'Thursday',
+    dayOffset: 3,
     title: 'Lower B',
     subtitle: 'Hamstring & glute focus',
     kind: 'lower',
-    accent: '#F49AC1',
+    accent: '#f48fb1',
     warmup: GLUTE_WARMUP,
+    cooldown: LOWER_COOLDOWN,
     exercises: [
       {
         id: 'db-rdl',
@@ -382,12 +439,13 @@ export const SESSIONS: Session[] = [
   },
   {
     id: 'full-body',
-    dayOfWeek: 6,
-    dayName: 'Saturday',
+    dayOffset: 5,
     title: 'Full Body + Core',
     subtitle: 'Plus cardio finish',
     kind: 'full',
-    accent: '#F7B267',
+    accent: '#f6b3a0',
+    warmup: FULL_WARMUP,
+    cooldown: FULL_COOLDOWN,
     exercises: [
       {
         id: 'hip-thrust-fb',
@@ -499,25 +557,24 @@ export const SESSIONS: Session[] = [
 ];
 
 export interface RestDay {
-  dayOfWeek: number;
-  dayName: string;
+  dayOffset: number;
   label: string;
   note: string;
 }
 
 export const REST_DAYS: RestDay[] = [
-  { dayOfWeek: 3, dayName: 'Wednesday', label: 'Rest or walk', note: 'A gentle walk is perfect. Nothing that fatigues the legs.' },
-  { dayOfWeek: 5, dayName: 'Friday', label: 'Rest', note: 'Full rest before Saturday. Recovery is where the growth happens.' },
-  { dayOfWeek: 0, dayName: 'Sunday', label: 'Rest', note: 'Reset for the week. Sleep and food do the work today.' },
+  { dayOffset: 2, label: 'Rest or walk', note: 'A gentle walk is perfect. Nothing that fatigues the legs.' },
+  { dayOffset: 4, label: 'Rest', note: 'Full rest before your full body day. Recovery is where the growth happens.' },
+  { dayOffset: 6, label: 'Rest', note: 'Reset for the week. Sleep and food do the work today.' },
 ];
 
-export const SESSION_BY_DAY: Record<number, Session | undefined> = SESSIONS.reduce(
-  (acc, s) => ({ ...acc, [s.dayOfWeek]: s }),
+export const SESSION_BY_OFFSET: Record<number, Session | undefined> = SESSIONS.reduce(
+  (acc, s) => ({ ...acc, [s.dayOffset]: s }),
   {} as Record<number, Session | undefined>,
 );
 
-export const REST_DAY_BY_DAY: Record<number, RestDay | undefined> = REST_DAYS.reduce(
-  (acc, d) => ({ ...acc, [d.dayOfWeek]: d }),
+export const REST_DAY_BY_OFFSET: Record<number, RestDay | undefined> = REST_DAYS.reduce(
+  (acc, d) => ({ ...acc, [d.dayOffset]: d }),
   {} as Record<number, RestDay | undefined>,
 );
 

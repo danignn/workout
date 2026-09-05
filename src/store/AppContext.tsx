@@ -11,6 +11,9 @@ import {
   type Profile,
   type Settings,
   type CycleSettings,
+  type ScheduleSettings,
+  type ThemeSettings,
+  type ExerciseMedia,
   type WorkoutLog,
 } from './types';
 import { getSession } from '../data/program';
@@ -26,6 +29,10 @@ interface AppContextValue {
   updateProfile: (patch: Partial<Profile>) => void;
   updateSettings: (patch: Partial<Settings>) => void;
   updateCycle: (patch: Partial<CycleSettings>) => void;
+  updateSchedule: (patch: Partial<ScheduleSettings>) => void;
+  updateTheme: (patch: Partial<ThemeSettings>) => void;
+  setMedia: (exerciseId: string, patch: Partial<ExerciseMedia>) => void;
+  clearMedia: (exerciseId: string, field: keyof ExerciseMedia) => void;
   /** Returns the log for this session on this date, creating it if needed. */
   ensureLog: (sessionId: string, date?: string) => WorkoutLog;
   getLog: (sessionId: string, date: string) => WorkoutLog | undefined;
@@ -42,6 +49,8 @@ interface AppContextValue {
   addMealLog: (date: string, item: Omit<MealLogItem, 'id'>) => void;
   removeMealLog: (date: string, id: string) => void;
   updateHabit: (date: string, patch: Partial<HabitDay>) => void;
+  toggleGrocery: (name: string) => void;
+  resetGrocery: () => void;
   replaceState: (next: AppState) => void;
 }
 
@@ -77,6 +86,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const updateCycle = useCallback((patch: Partial<CycleSettings>) => {
     setState((s) => ({ ...s, cycle: { ...s.cycle, ...patch } }));
+  }, []);
+
+  const updateSchedule = useCallback((patch: Partial<ScheduleSettings>) => {
+    setState((s) => ({ ...s, schedule: { ...s.schedule, ...patch } }));
+  }, []);
+
+  const updateTheme = useCallback((patch: Partial<ThemeSettings>) => {
+    setState((s) => ({ ...s, theme: { ...s.theme, ...patch } }));
+  }, []);
+
+  const setMedia = useCallback((exerciseId: string, patch: Partial<ExerciseMedia>) => {
+    setState((s) => ({ ...s, media: { ...s.media, [exerciseId]: { ...s.media[exerciseId], ...patch } } }));
+  }, []);
+
+  const clearMedia = useCallback((exerciseId: string, field: keyof ExerciseMedia) => {
+    setState((s) => {
+      const next = { ...s.media[exerciseId] };
+      delete next[field];
+      return { ...s, media: { ...s.media, [exerciseId]: next } };
+    });
   }, []);
 
   const getLog = useCallback(
@@ -194,6 +223,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setState((s) => ({ ...s, habits: { ...s.habits, [date]: { ...EMPTY_HABIT, ...s.habits[date], ...patch } } }));
   }, []);
 
+  const toggleGrocery = useCallback((name: string) => {
+    setState((s) => ({ ...s, grocery: { ...s.grocery, [name]: !s.grocery[name] } }));
+  }, []);
+
+  const resetGrocery = useCallback(() => setState((s) => ({ ...s, grocery: {} })), []);
+
   const replaceState = useCallback((next: AppState) => setState(next), []);
 
   const value = useMemo<AppContextValue>(
@@ -203,6 +238,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       updateProfile,
       updateSettings,
       updateCycle,
+      updateSchedule,
+      updateTheme,
+      setMedia,
+      clearMedia,
       ensureLog,
       getLog,
       updateSet,
@@ -218,6 +257,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addMealLog,
       removeMealLog,
       updateHabit,
+      toggleGrocery,
+      resetGrocery,
       replaceState,
     }),
     [
@@ -225,6 +266,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       updateProfile,
       updateSettings,
       updateCycle,
+      updateSchedule,
+      updateTheme,
+      setMedia,
+      clearMedia,
       ensureLog,
       getLog,
       updateSet,
@@ -240,6 +285,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addMealLog,
       removeMealLog,
       updateHabit,
+      toggleGrocery,
+      resetGrocery,
       replaceState,
     ],
   );
