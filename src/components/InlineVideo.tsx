@@ -78,6 +78,13 @@ export function VideoPlayer({ source }: { source: VideoSource }) {
 
   return (
     <div className="stack-sm">
+      <a className="btn btn-block" href={effective.watch} target="_blank" rel="noreferrer noopener">
+        Open in {effective.kind === 'youtube' ? 'YouTube' : effective.kind === 'drive' ? 'Drive' : 'TikTok'}
+      </a>
+      <p className="tiny faint center">
+        If the player below stays blank, TikTok is blocking playback here. Save the file in Me &rarr; My videos and it
+        will play instantly every time.
+      </p>
       <iframe
         className={`video-frame${effective.kind === 'youtube' || effective.kind === 'drive' ? ' video-frame-wide' : ''}`}
         src={effective.embed}
@@ -86,9 +93,6 @@ export function VideoPlayer({ source }: { source: VideoSource }) {
         referrerPolicy="strict-origin-when-cross-origin"
         allowFullScreen
       />
-      <a className="btn btn-ghost btn-sm btn-block" href={effective.watch} target="_blank" rel="noreferrer noopener">
-        Open in {effective.kind === 'youtube' ? 'YouTube' : effective.kind === 'drive' ? 'Drive' : 'TikTok'}
-      </a>
     </div>
   );
 }

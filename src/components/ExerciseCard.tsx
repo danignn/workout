@@ -40,19 +40,21 @@ export function ExerciseCard({ exercise, index, log, defaultOpen }: Props) {
 
   const media = state.media[exercise.id] ?? {};
 
-  // Reference videos: the ones from the plan, then anything she added herself.
+  // A file saved on the phone always wins: it plays instantly, works offline,
+  // and cannot break when TikTok blocks embedding or the post is deleted.
   const clips: PlayRequest[] = [
+    ...(media.clipId ? [{ title: 'Saved video', subtitle: 'On this phone, plays offline', clipId: media.clipId }] : []),
     ...(exercise.videos ?? []).map((v) => ({
       title: v.title,
       subtitle: `@${v.author}`,
       source: parseVideoUrl(v.url) ?? undefined,
     })),
-    ...(media.clipId ? [{ title: 'My own clip', subtitle: 'Saved on this phone', clipId: media.clipId }] : []),
     ...(() => {
       const parsed = media.link ? parseVideoUrl(media.link) : null;
       return parsed ? [{ title: 'My saved link', subtitle: media.link, source: parsed }] : [];
     })(),
   ];
+  const hasLocal = !!media.clipId;
 
   const saveClip = async (file: File | undefined) => {
     if (!file) return;
@@ -130,6 +132,87 @@ export function ExerciseCard({ exercise, index, log, defaultOpen }: Props) {
 
       {open && (
         <div className="exercise-body stack">
+          <div className="stack-sm">
+            <div className="row-between">
+              <span className="tiny bold faint" style={{ textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                Watch the form
+              </span>
+              {hasLocal && <span className="pill pill-mint">Saved offline</span>}
+            </div>
+
+            {clips.length > 0 ? (
+              clips.map((c) => (
+                <VideoButton key={c.title + (c.subtitle ?? '')} title={c.title} subtitle={c.subtitle} onPlay={() => setPlaying(c)} />
+              ))
+            ) : (
+              <p className="small muted">
+                No clip saved for this one yet. Search a tutorial below, then paste the link to keep it here.
+              </p>
+            )}
+
+            <div className="row wrap" style={{ gap: 6 }}>
+              <a className="btn btn-soft btn-sm" href={youtubeSearchUrl(exercise.name)} target="_blank" rel="noreferrer noopener">
+                Search YouTube
+              </a>
+              <a className="btn btn-soft btn-sm" href={tiktokSearchUrl(exercise.name)} target="_blank" rel="noreferrer noopener">
+                Search TikTok
+              </a>
+              <button className="btn btn-soft btn-sm" onClick={() => setShowAdd((v) => !v)}>
+                {showAdd ? 'Close' : 'Add my own'}
+              </button>
+            </div>
+
+            {showAdd && (
+              <div className="card card-flat stack-sm" style={{ marginTop: 4 }}>
+                <div className="field">
+                  <label htmlFor={`link-${exercise.id}`}>Paste a YouTube, TikTok or Google Drive link</label>
+                  <input
+                    id={`link-${exercise.id}`}
+                    className="input"
+                    placeholder="https://…"
+                    value={linkDraft}
+                    onChange={(e) => setLinkDraft(e.target.value)}
+                  />
+                </div>
+                <button className="btn btn-sm btn-block" onClick={saveLink} disabled={!linkDraft.trim()}>
+                  Save link to this exercise
+                </button>
+
+                <div className="divider" style={{ margin: '4px 0' }} />
+
+                <input
+                  ref={clipRef}
+                  type="file"
+                  accept="video/*"
+                  style={{ display: 'none' }}
+                  onChange={(e) => saveClip(e.target.files?.[0])}
+                />
+                <button className="btn btn-ghost btn-sm btn-block" disabled={busy} onClick={() => clipRef.current?.click()}>
+                  {busy ? 'Saving…' : 'Save a video file to this phone'}
+                </button>
+                <p className="tiny faint">
+                  A file saved here lives on your phone and plays with no internet. Nothing anyone deletes online can
+                  touch it.
+                </p>
+
+                {(media.link || media.clipId) && (
+                  <div className="row wrap" style={{ gap: 6 }}>
+                    {media.link && (
+                      <button className="btn btn-danger btn-sm" onClick={() => clearMedia(exercise.id, 'link')}>
+                        Remove my link
+                      </button>
+                    )}
+                    {media.clipId && (
+                      <button className="btn btn-danger btn-sm" onClick={() => clearMedia(exercise.id, 'clipId')}>
+                        Remove my clip
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
           {eased !== null && (
             <div className="card card-flat card-tight row" style={{ gap: 10, alignItems: 'flex-start' }}>
               <span style={{ flexShrink: 0, marginTop: 1 }}>🌙</span>
@@ -232,84 +315,6 @@ export function ExerciseCard({ exercise, index, log, defaultOpen }: Props) {
           )}
 
           {exercise.notes && <p className="small muted">{exercise.notes}</p>}
-
-          <div className="stack-sm">
-            <div className="tiny bold faint" style={{ textTransform: 'uppercase', letterSpacing: '0.07em' }}>
-              Watch the form
-            </div>
-
-            {clips.length > 0 ? (
-              clips.map((c) => (
-                <VideoButton key={c.title + (c.subtitle ?? '')} title={c.title} subtitle={c.subtitle} onPlay={() => setPlaying(c)} />
-              ))
-            ) : (
-              <p className="small muted">
-                No clip saved for this one yet. Search a tutorial below, then paste the link to keep it here.
-              </p>
-            )}
-
-            <div className="row wrap" style={{ gap: 6 }}>
-              <a className="btn btn-soft btn-sm" href={youtubeSearchUrl(exercise.name)} target="_blank" rel="noreferrer noopener">
-                Search YouTube
-              </a>
-              <a className="btn btn-soft btn-sm" href={tiktokSearchUrl(exercise.name)} target="_blank" rel="noreferrer noopener">
-                Search TikTok
-              </a>
-              <button className="btn btn-soft btn-sm" onClick={() => setShowAdd((v) => !v)}>
-                {showAdd ? 'Close' : 'Add my own'}
-              </button>
-            </div>
-
-            {showAdd && (
-              <div className="card card-flat stack-sm" style={{ marginTop: 4 }}>
-                <div className="field">
-                  <label htmlFor={`link-${exercise.id}`}>Paste a YouTube, TikTok or Google Drive link</label>
-                  <input
-                    id={`link-${exercise.id}`}
-                    className="input"
-                    placeholder="https://…"
-                    value={linkDraft}
-                    onChange={(e) => setLinkDraft(e.target.value)}
-                  />
-                </div>
-                <button className="btn btn-sm btn-block" onClick={saveLink} disabled={!linkDraft.trim()}>
-                  Save link to this exercise
-                </button>
-
-                <div className="divider" style={{ margin: '4px 0' }} />
-
-                <input
-                  ref={clipRef}
-                  type="file"
-                  accept="video/*"
-                  style={{ display: 'none' }}
-                  onChange={(e) => saveClip(e.target.files?.[0])}
-                />
-                <button className="btn btn-ghost btn-sm btn-block" disabled={busy} onClick={() => clipRef.current?.click()}>
-                  {busy ? 'Saving…' : 'Save a video file to this phone'}
-                </button>
-                <p className="tiny faint">
-                  A file saved here lives on your phone and plays with no internet. Nothing anyone deletes online can
-                  touch it.
-                </p>
-
-                {(media.link || media.clipId) && (
-                  <div className="row wrap" style={{ gap: 6 }}>
-                    {media.link && (
-                      <button className="btn btn-danger btn-sm" onClick={() => clearMedia(exercise.id, 'link')}>
-                        Remove my link
-                      </button>
-                    )}
-                    {media.clipId && (
-                      <button className="btn btn-danger btn-sm" onClick={() => clearMedia(exercise.id, 'clipId')}>
-                        Remove my clip
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
 
           <VideoSheet request={playing} onClose={() => setPlaying(null)} />
         </div>

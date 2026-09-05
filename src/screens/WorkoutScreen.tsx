@@ -16,6 +16,7 @@ function MobilityBlock({
   blurb,
   moves,
   video,
+  localClipId,
   onPlay,
   defaultOpen,
 }: {
@@ -23,6 +24,7 @@ function MobilityBlock({
   blurb: string;
   moves: MobilityMove[];
   video?: string;
+  localClipId?: string;
   onPlay: (r: PlayRequest) => void;
   defaultOpen: boolean;
 }) {
@@ -41,13 +43,17 @@ function MobilityBlock({
       {open && (
         <div className="exercise-body">
           <p className="small muted" style={{ marginBottom: 6 }}>{blurb}</p>
-          {video && (
+          {(video || localClipId) && (
             <div style={{ marginBottom: 10 }}>
               <VideoButton
                 title={`Follow along: ${title.toLowerCase()}`}
-                subtitle="Tap to play the video"
+                subtitle={localClipId ? 'Saved on this phone, plays offline' : 'Tap to play the video'}
                 onPlay={() => {
-                  const source = parseVideoUrl(video);
+                  if (localClipId) {
+                    onPlay({ title, subtitle: 'Your saved video', clipId: localClipId });
+                    return;
+                  }
+                  const source = parseVideoUrl(video as string);
                   if (source) onPlay({ title, subtitle: 'Follow-along video', source });
                 }}
               />
@@ -75,7 +81,7 @@ export function WorkoutScreen() {
   const [params] = useSearchParams();
   const date = params.get('date') ?? todayKey();
   const navigate = useNavigate();
-  const { ensureLog, getLog, setLogNotes, toggleWorkoutComplete, addExtraExercise, removeExtraExercise } = useApp();
+  const { state, ensureLog, getLog, setLogNotes, toggleWorkoutComplete, addExtraExercise, removeExtraExercise } = useApp();
   const [playing, setPlaying] = useState<PlayRequest | null>(null);
   const [addOpen, setAddOpen] = useState(false);
 
@@ -145,6 +151,7 @@ export function WorkoutScreen() {
           blurb="Do this before your first working set. It is what makes set one feel like set three instead of a warm-up in disguise."
           moves={session.warmup}
           video={session.warmupVideo}
+          localClipId={state.media[`warmup:${session.id}`]?.clipId}
           onPlay={setPlaying}
           defaultOpen={totals.done === 0}
         />
@@ -213,6 +220,7 @@ export function WorkoutScreen() {
           blurb="Five minutes here is what stops you walking down stairs sideways tomorrow. Breathe out into each stretch, never bounce."
           moves={session.cooldown}
           video={session.cooldownVideo}
+          localClipId={state.media[`cooldown:${session.id}`]?.clipId}
           onPlay={setPlaying}
           defaultOpen={allSetsDone}
         />

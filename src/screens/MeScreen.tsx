@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PALETTES, MASCOTS } from '../data/themes';
 import { MascotPreview } from '../components/Mascot';
 import { putPhoto } from '../store/idb';
@@ -7,7 +8,7 @@ import { startDayLabel } from '../utils/schedule';
 import { uid } from '../store/AppContext';
 import { useApp } from '../store/AppContext';
 import { Sheet } from '../components/Sheet';
-import { DownloadIcon, InfoIcon, UploadIcon } from '../components/Icons';
+import { ChevronRight, DownloadIcon, InfoIcon, UploadIcon } from '../components/Icons';
 import { exportState, parseImport } from '../store/storage';
 import { clearPhotos } from '../store/idb';
 import { proteinTargetFor } from '../data/meals';
@@ -18,6 +19,7 @@ import { initialState } from '../store/types';
 export function MeScreen() {
   const { state, updateProfile, updateSettings, updateCycle, updateSchedule, updateTheme, replaceState } = useApp();
   const mascotFileRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
   const [installOpen, setInstallOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -294,6 +296,13 @@ export function MeScreen() {
               <span className="tiny faint">Replaces what is in the app right now</span>
             </span>
             <UploadIcon />
+          </button>
+          <button className="link-row" onClick={() => navigate('/videos')}>
+            <span className="grow">
+              <span className="small bold" style={{ display: 'block' }}>My videos</span>
+              <span className="tiny faint">Save video files so they play instantly and never disappear</span>
+            </span>
+            <ChevronRight />
           </button>
           <button className="link-row" onClick={() => setInstallOpen(true)}>
             <span className="grow">
