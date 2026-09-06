@@ -43,7 +43,9 @@ export function ExerciseCard({ exercise, index, log, defaultOpen }: Props) {
   // A file saved on the phone always wins: it plays instantly, works offline,
   // and cannot break when TikTok blocks embedding or the post is deleted.
   const clips: PlayRequest[] = [
-    ...(media.clipId ? [{ title: 'Saved video', subtitle: 'On this phone, plays offline', clipId: media.clipId }] : []),
+    ...(media.clipId
+      ? [{ title: exercise.name, subtitle: 'Saved on this phone, plays offline', clipId: media.clipId }]
+      : []),
     ...(exercise.videos ?? []).map((v) => ({
       title: v.title,
       subtitle: `@${v.author}`,

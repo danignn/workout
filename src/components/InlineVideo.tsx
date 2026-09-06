@@ -110,20 +110,33 @@ export function VideoPlayer({ source, onSaveFile }: { source: VideoSource; onSav
 
 /** Plays a clip saved to this device. */
 export function OwnClip({ clipId }: { clipId: string }) {
-  const [url, setUrl] = useState<string | null>(null);
-  const [missing, setMissing] = useState(false);
+  const [src, setSrc] = useState<string | null>(null);
+  const [problem, setProblem] = useState<string | null>(null);
+  const [noPicture, setNoPicture] = useState(false);
 
   useEffect(() => {
     let revoke: string | null = null;
     let cancelled = false;
+    setProblem(null);
+    setNoPicture(false);
+
+    // Prefer the service worker route: it answers byte range requests, which
+    // Safari requires before it will render video. A blob: URL cannot, and
+    // that is what leaves the picture blank while the audio still plays.
+    const sw = navigator.serviceWorker?.controller;
+    if (sw) {
+      setSrc(`${import.meta.env.BASE_URL}__media/${encodeURIComponent(clipId)}`);
+      return;
+    }
+
     getPhoto(clipId).then((blob) => {
       if (cancelled) return;
       if (!blob) {
-        setMissing(true);
+        setProblem('That saved video is no longer on this device.');
         return;
       }
       revoke = URL.createObjectURL(blob);
-      setUrl(revoke);
+      setSrc(revoke);
     });
     return () => {
       cancelled = true;
@@ -131,7 +144,32 @@ export function OwnClip({ clipId }: { clipId: string }) {
     };
   }, [clipId]);
 
-  if (missing) return <div className="chart-empty">That saved video is no longer on this device.</div>;
-  if (!url) return <div className="chart-empty">Loading your video…</div>;
-  return <video className="video-frame" src={url} controls autoPlay playsInline preload="metadata" />;
+  if (problem) return <div className="chart-empty">{problem}</div>;
+  if (!src) return <div className="chart-empty">Loading your video…</div>;
+
+  return (
+    <div className="stack-sm">
+      <video
+        className="video-frame"
+        src={src}
+        controls
+        autoPlay
+        playsInline
+        preload="auto"
+        onLoadedMetadata={(e) => {
+          // No video track means the file is audio-only or its codec cannot be
+          // decoded here; say so rather than showing a black rectangle.
+          const el = e.currentTarget;
+          setNoPicture(el.videoWidth === 0 || el.videoHeight === 0);
+        }}
+        onError={() => setProblem('This video could not be played. Re-saving the file usually fixes it.')}
+      />
+      {noPicture && (
+        <p className="tiny" style={{ color: 'var(--pink-700)', fontWeight: 600 }}>
+          This file has sound but no picture the browser can show. It is most likely a format your phone cannot
+          display, such as HEVC. Re-save it as MP4 and it will play.
+        </p>
+      )}
+    </div>
+  );
 }

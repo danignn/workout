@@ -17,6 +17,7 @@ function MobilityBlock({
   blurb,
   moves,
   video,
+  mediaLabel,
   localClipId,
   onSaveFile,
   onPlay,
@@ -26,6 +27,7 @@ function MobilityBlock({
   blurb: string;
   moves: MobilityMove[];
   video?: string;
+  mediaLabel: string;
   localClipId?: string;
   onSaveFile: () => void;
   onPlay: (r: PlayRequest) => void;
@@ -53,7 +55,7 @@ function MobilityBlock({
                 subtitle={localClipId ? 'Saved on this phone, plays offline' : 'Tap to play the video'}
                 onPlay={() => {
                   if (localClipId) {
-                    onPlay({ title, subtitle: 'Your saved video', clipId: localClipId });
+                    onPlay({ title: mediaLabel, subtitle: 'Saved on this phone, plays offline', clipId: localClipId });
                     return;
                   }
                   const source = parseVideoUrl(video as string);
@@ -156,6 +158,7 @@ export function WorkoutScreen() {
           blurb="Do this before your first working set. It is what makes set one feel like set three instead of a warm-up in disguise."
           moves={session.warmup}
           video={session.warmupVideo}
+          mediaLabel={`${session.title} — warm-up`}
           localClipId={state.media[`warmup:${session.id}`]?.clipId}
           onSaveFile={() => { mobilityKeyRef.current = `warmup:${session.id}`; mobilityFileRef.current?.click(); }}
           onPlay={setPlaying}
@@ -226,6 +229,7 @@ export function WorkoutScreen() {
           blurb="Five minutes here is what stops you walking down stairs sideways tomorrow. Breathe out into each stretch, never bounce."
           moves={session.cooldown}
           video={session.cooldownVideo}
+          mediaLabel={`${session.title} — cool-down`}
           localClipId={state.media[`cooldown:${session.id}`]?.clipId}
           onSaveFile={() => { mobilityKeyRef.current = `cooldown:${session.id}`; mobilityFileRef.current?.click(); }}
           onPlay={setPlaying}

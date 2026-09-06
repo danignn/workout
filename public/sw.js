@@ -6,7 +6,7 @@
  * that the app opens with no signal at all, which is the point — gyms have
  * terrible reception.
  */
-const CACHE = 'bloom-v1';
+const CACHE = 'bloom-v2';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
 
 self.addEventListener('install', (event) => {
@@ -23,11 +23,83 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+/**
+ * Saved videos are served from here rather than from a blob: URL.
+ * Safari will not render video from a blob URL because it cannot make byte
+ * range requests against one, which plays the audio track and leaves the
+ * picture blank. A real URL that answers Range requests fixes that.
+ */
+const MEDIA_PREFIX = '__media/';
+
+function openMediaDb() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('bloom-photos', 1);
+    req.onupgradeneeded = () => {
+      if (!req.result.objectStoreNames.contains('photos')) req.result.createObjectStore('photos');
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function readMedia(id) {
+  return openMediaDb().then(
+    (db) =>
+      new Promise((resolve, reject) => {
+        const req = db.transaction('photos', 'readonly').objectStore('photos').get(id);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      }),
+  );
+}
+
+async function serveMedia(request, id) {
+  const blob = await readMedia(id).catch(() => null);
+  if (!blob) return new Response('Not found', { status: 404 });
+
+  const type = blob.type || 'video/mp4';
+  const total = blob.size;
+  const range = request.headers.get('range');
+
+  if (!range) {
+    return new Response(blob, {
+      status: 200,
+      headers: { 'Content-Type': type, 'Content-Length': String(total), 'Accept-Ranges': 'bytes' },
+    });
+  }
+
+  const match = /bytes=(\d*)-(\d*)/.exec(range);
+  const start = match && match[1] ? parseInt(match[1], 10) : 0;
+  const end = match && match[2] ? parseInt(match[2], 10) : total - 1;
+  const safeEnd = Math.min(end, total - 1);
+  if (start > safeEnd) {
+    return new Response(null, { status: 416, headers: { 'Content-Range': `bytes */${total}` } });
+  }
+
+  return new Response(blob.slice(start, safeEnd + 1, type), {
+    status: 206,
+    headers: {
+      'Content-Type': type,
+      'Content-Length': String(safeEnd - start + 1),
+      'Content-Range': `bytes ${start}-${safeEnd}/${total}`,
+      'Accept-Ranges': 'bytes',
+    },
+  });
+}
+
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return;
 
   const url = new URL(request.url);
+
+  if (url.origin === self.location.origin && url.pathname.includes(MEDIA_PREFIX)) {
+    const id = decodeURIComponent(url.pathname.split(MEDIA_PREFIX)[1] || '');
+    if (id) {
+      event.respondWith(serveMedia(request, id));
+      return;
+    }
+  }
   // Never cache TikTok embeds or anything else off-origin.
   if (url.origin !== self.location.origin) return;
 
