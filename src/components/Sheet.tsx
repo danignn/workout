@@ -1,4 +1,5 @@
 import { useEffect, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { CloseIcon } from './Icons';
 
 interface Props {
@@ -23,7 +24,10 @@ export function Sheet({ open, onClose, title, children }: Props) {
 
   if (!open) return null;
 
-  return (
+  // Portalled to the body on purpose. A transformed ancestor becomes the
+  // containing block for position: fixed, which anchored this to the scrolling
+  // page instead of the screen and left it off-screen entirely.
+  return createPortal(
     <div className="sheet-backdrop" onClick={onClose} role="presentation">
       <div className="sheet" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={title}>
         <div className="sheet-handle" />
@@ -37,6 +41,7 @@ export function Sheet({ open, onClose, title, children }: Props) {
         )}
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
