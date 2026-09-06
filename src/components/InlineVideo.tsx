@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { getPhoto } from '../store/idb';
 import { resolveShortTiktok, tiktokSource, type VideoSource } from '../utils/media';
 import { PlayIcon } from './Icons';
@@ -108,41 +108,74 @@ export function VideoPlayer({ source, onSaveFile }: { source: VideoSource; onSav
   );
 }
 
-/** Plays a clip saved to this device. */
+/**
+ * Plays a clip saved to this device.
+ *
+ * Safari will not render video from a blob: URL because it cannot make byte
+ * range requests against one, which plays the audio and leaves the picture
+ * blank. The service worker route answers Range properly, so it is tried
+ * first, and the blob URL is kept only as an automatic fallback for when no
+ * worker is controlling the page yet.
+ */
 export function OwnClip({ clipId }: { clipId: string }) {
   const [src, setSrc] = useState<string | null>(null);
+  const [usingFallback, setUsingFallback] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const [noPicture, setNoPicture] = useState(false);
+  const blobUrlRef = useRef<string | null>(null);
 
-  useEffect(() => {
-    let revoke: string | null = null;
-    let cancelled = false;
-    setProblem(null);
-    setNoPicture(false);
+  const mediaUrl = `${import.meta.env.BASE_URL}__media/${encodeURIComponent(clipId)}`;
 
-    // Prefer the service worker route: it answers byte range requests, which
-    // Safari requires before it will render video. A blob: URL cannot, and
-    // that is what leaves the picture blank while the audio still plays.
-    const sw = navigator.serviceWorker?.controller;
-    if (sw) {
-      setSrc(`${import.meta.env.BASE_URL}__media/${encodeURIComponent(clipId)}`);
+  // Fall back to a blob URL if the worker route cannot serve the file.
+  const useBlobFallback = useCallback(() => {
+    if (blobUrlRef.current) {
+      setSrc(blobUrlRef.current);
       return;
     }
-
     getPhoto(clipId).then((blob) => {
-      if (cancelled) return;
       if (!blob) {
         setProblem('That saved video is no longer on this device.');
         return;
       }
-      revoke = URL.createObjectURL(blob);
-      setSrc(revoke);
+      const url = URL.createObjectURL(blob);
+      blobUrlRef.current = url;
+      setUsingFallback(true);
+      setSrc(url);
     });
+  }, [clipId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setProblem(null);
+    setNoPicture(false);
+    setUsingFallback(false);
+
+    // Give the worker a moment to take control after an update, then prefer it.
+    const decide = async () => {
+      try {
+        if (navigator.serviceWorker) {
+          await navigator.serviceWorker.ready;
+          if (cancelled) return;
+          if (navigator.serviceWorker.controller) {
+            setSrc(mediaUrl);
+            return;
+          }
+        }
+      } catch {
+        /* fall through to the blob URL */
+      }
+      if (!cancelled) useBlobFallback();
+    };
+    decide();
+
     return () => {
       cancelled = true;
-      if (revoke) URL.revokeObjectURL(revoke);
+      if (blobUrlRef.current) {
+        URL.revokeObjectURL(blobUrlRef.current);
+        blobUrlRef.current = null;
+      }
     };
-  }, [clipId]);
+  }, [clipId, mediaUrl, useBlobFallback]);
 
   if (problem) return <div className="chart-empty">{problem}</div>;
   if (!src) return <div className="chart-empty">Loading your video…</div>;
@@ -150,6 +183,7 @@ export function OwnClip({ clipId }: { clipId: string }) {
   return (
     <div className="stack-sm">
       <video
+        key={src}
         className="video-frame"
         src={src}
         controls
@@ -157,17 +191,22 @@ export function OwnClip({ clipId }: { clipId: string }) {
         playsInline
         preload="auto"
         onLoadedMetadata={(e) => {
-          // No video track means the file is audio-only or its codec cannot be
-          // decoded here; say so rather than showing a black rectangle.
           const el = e.currentTarget;
           setNoPicture(el.videoWidth === 0 || el.videoHeight === 0);
         }}
-        onError={() => setProblem('This video could not be played. Re-saving the file usually fixes it.')}
+        onError={() => {
+          // The worker route failed; try the blob URL before giving up.
+          if (!usingFallback) {
+            useBlobFallback();
+            return;
+          }
+          setProblem('This video could not be played. Re-saving the file usually fixes it.');
+        }}
       />
       {noPicture && (
         <p className="tiny" style={{ color: 'var(--pink-700)', fontWeight: 600 }}>
-          This file has sound but no picture the browser can show. It is most likely a format your phone cannot
-          display, such as HEVC. Re-save it as MP4 and it will play.
+          Sound but no picture means this phone cannot display the file's video format, usually HEVC. Re-save it as
+          MP4 and it will play. If you are on iPhone, Settings → Camera → Formats → Most Compatible records MP4.
         </p>
       )}
     </div>

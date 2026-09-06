@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useApp } from '../store/AppContext';
+import type { PeriodLog } from '../store/types';
 import { CheckIcon, InfoIcon, TrashIcon } from '../components/Icons';
+import { Sheet } from '../components/Sheet';
 import { formatLong, formatShort, todayKey } from '../utils/date';
 import {
   currentPhase,
@@ -12,9 +14,10 @@ import {
 } from '../utils/cycle';
 
 export function CycleScreen() {
-  const { state, updateCycle, startPeriod, endPeriod, deletePeriod } = useApp();
+  const { state, updateCycle, startPeriod, endPeriod, deletePeriod, updatePeriod } = useApp();
   const today = todayKey();
   const [startDate, setStartDate] = useState(today);
+  const [editing, setEditing] = useState<string | null>(null);
 
   const cycle = state.cycle;
   const logs = sortedLogs(cycle);
@@ -45,6 +48,13 @@ export function CycleScreen() {
             </p>
             <button className="btn btn-white btn-block" style={{ marginTop: 14, position: 'relative' }} onClick={() => endPeriod(today)}>
               <CheckIcon size={17} /> My period ended today
+            </button>
+            <button
+              className="btn btn-block"
+              style={{ marginTop: 8, position: 'relative', background: 'rgba(255,255,255,0.22)', color: '#fff', boxShadow: 'none' }}
+              onClick={() => setEditing(open.id)}
+            >
+              It ended on a different day
             </button>
           </div>
         ) : (
@@ -186,6 +196,7 @@ export function CycleScreen() {
                         : 'Still open — tap "My period ended today" when it finishes'}
                     </span>
                   </span>
+                  <button className="btn btn-soft btn-sm" onClick={() => setEditing(log.id)}>Edit</button>
                   <button className="icon-btn" onClick={() => deletePeriod(log.id)} aria-label="Delete this entry">
                     <TrashIcon size={16} />
                   </button>
@@ -204,6 +215,77 @@ export function CycleScreen() {
           </span>
         </div>
       </div>
+
+      <PeriodEditor
+        log={logs.find((l) => l.id === editing) ?? null}
+        today={today}
+        onClose={() => setEditing(null)}
+        onSave={(patch) => {
+          if (editing) updatePeriod(editing, patch);
+          setEditing(null);
+        }}
+      />
     </>
+  );
+}
+
+/** Lets a logged period be corrected, including one left open by mistake. */
+function PeriodEditor({
+  log,
+  today,
+  onClose,
+  onSave,
+}: {
+  log: PeriodLog | null;
+  today: string;
+  onClose: () => void;
+  onSave: (patch: { start?: string; end?: string | null }) => void;
+}) {
+  const [start, setStart] = useState('');
+  const [end, setEnd] = useState('');
+
+  useEffect(() => {
+    setStart(log?.start ?? '');
+    setEnd(log?.end ?? '');
+  }, [log]);
+
+  if (!log) return <Sheet open={false} onClose={onClose}><span /></Sheet>;
+
+  const invalid = !!end && !!start && end < start;
+
+  return (
+    <Sheet open onClose={onClose} title="Edit this period">
+      <div className="stack">
+        <div className="field">
+          <label htmlFor="edit-start">First day</label>
+          <input id="edit-start" className="input" type="date" max={today} value={start} onChange={(e) => setStart(e.target.value)} />
+        </div>
+        <div className="field">
+          <label htmlFor="edit-end">Last day</label>
+          <input id="edit-end" className="input" type="date" max={today} value={end} onChange={(e) => setEnd(e.target.value)} />
+          <p className="tiny faint">
+            Leave this blank if it is still going. Setting it here is the fix for forgetting to tap the button on the
+            day it finished.
+          </p>
+        </div>
+        {invalid && (
+          <p className="tiny" style={{ color: '#c0392b', fontWeight: 600 }}>
+            The last day cannot be before the first day.
+          </p>
+        )}
+        <button
+          className="btn btn-block"
+          disabled={!start || invalid}
+          onClick={() => onSave({ start, end: end ? end : null })}
+        >
+          Save changes
+        </button>
+        {log.end && (
+          <button className="btn btn-ghost btn-block" onClick={() => onSave({ end: null })}>
+            Still going, reopen it
+          </button>
+        )}
+      </div>
+    </Sheet>
   );
 }

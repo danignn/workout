@@ -32,6 +32,7 @@ interface AppContextValue {
   startPeriod: (date: string) => void;
   endPeriod: (date: string) => void;
   deletePeriod: (id: string) => void;
+  updatePeriod: (id: string, patch: { start?: string; end?: string | null }) => void;
   updateSchedule: (patch: Partial<ScheduleSettings>) => void;
   updateTheme: (patch: Partial<ThemeSettings>) => void;
   setMedia: (exerciseId: string, patch: Partial<ExerciseMedia>) => void;
@@ -121,6 +122,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
         cycle: { ...s.cycle, logs: logs.map((l) => (l.id === open.id ? { ...l, end: date } : l)) },
       };
     });
+  }, []);
+
+  const updatePeriod = useCallback((id: string, patch: { start?: string; end?: string | null }) => {
+    setState((s) => ({
+      ...s,
+      cycle: {
+        ...s.cycle,
+        logs: (s.cycle.logs ?? []).map((l) => {
+          if (l.id !== id) return l;
+          const next = { ...l };
+          if (patch.start) next.start = patch.start;
+          // null clears the end date, reopening a period logged as finished.
+          if (patch.end === null) delete next.end;
+          else if (patch.end) next.end = patch.end;
+          return next;
+        }),
+      },
+    }));
   }, []);
 
   const deletePeriod = useCallback((id: string) => {
@@ -337,6 +356,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       startPeriod,
       endPeriod,
       deletePeriod,
+      updatePeriod,
       updateSchedule,
       updateTheme,
       setMedia,

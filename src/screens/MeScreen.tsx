@@ -311,6 +311,29 @@ export function MeScreen() {
             </span>
             <InfoIcon />
           </button>
+          <button
+            className="link-row"
+            onClick={async () => {
+              flash('Checking for an update…');
+              try {
+                const regs = await navigator.serviceWorker?.getRegistrations?.();
+                await Promise.all((regs ?? []).map((r) => r.unregister()));
+                if ('caches' in window) {
+                  const keys = await caches.keys();
+                  await Promise.all(keys.map((k) => caches.delete(k)));
+                }
+              } catch {
+                /* Reloading is still worth a try. */
+              }
+              window.location.reload();
+            }}
+          >
+            <span className="grow">
+              <span className="small bold" style={{ display: 'block' }}>Force update</span>
+              <span className="tiny faint">Use this if a new feature is missing after an update</span>
+            </span>
+            <InfoIcon />
+          </button>
           <button className="link-row" onClick={() => setAboutOpen(true)}>
             <span className="grow">
               <span className="small bold" style={{ display: 'block' }}>About this app</span>

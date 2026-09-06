@@ -4,7 +4,6 @@ import { useApp } from '../store/AppContext';
 import { ProgressRing } from '../components/Charts';
 import { ChevronRight, DropIcon, FlameIcon, MealIcon, MinusIcon, MoonIcon, PlusIcon, WalkIcon } from '../components/Icons';
 import { addDays, formatLong, fromKey, greeting, todayKey } from '../utils/date';
-import { currentPhase, trainingAdjustment } from '../utils/cycle';
 import { nextSessionAfter, restDayFor, sessionFor, weekNumber } from '../utils/schedule';
 import { setsCompleted, weekStreak, workoutsThisWeek } from '../utils/stats';
 import { EMPTY_HABIT } from '../store/types';
@@ -25,8 +24,6 @@ export function TodayScreen() {
   const session = sessionFor(start, selected);
   const restDay = restDayFor(start, selected);
   const log = state.workouts.find((w) => w.date === selected && w.sessionId === session?.id);
-  const phase = currentPhase(state.cycle, selected);
-  const adjustment = trainingAdjustment(state.cycle, selected);
   const habit = state.habits[selected] ?? EMPTY_HABIT;
   const isToday = selected === today;
 
@@ -137,25 +134,6 @@ export function TodayScreen() {
           </div>
         )}
 
-        {adjustment && (
-          <div className="card" style={{ borderColor: 'var(--pink-300)' }}>
-            <span className="pill">🌙 Period · day {adjustment.day}</span>
-            <h3 style={{ marginTop: 10 }}>{adjustment.headline}</h3>
-            <p className="small muted" style={{ marginTop: 6 }}>{adjustment.advice}</p>
-            <Link to="/cycle" className="tiny" style={{ display: 'inline-block', marginTop: 8, color: 'var(--pink-700)', fontWeight: 600, textDecoration: 'none' }}>
-              Open cycle tracker →
-            </Link>
-          </div>
-        )}
-
-        {phase && !adjustment && (
-          <div className="card">
-            <span className="pill pill-lilac">{phase.emoji} {phase.label} · day {phase.dayOfCycle}</span>
-            <h3 style={{ marginTop: 10 }}>{phase.headline}</h3>
-            <p className="small muted" style={{ marginTop: 5 }}>{phase.advice}</p>
-          </div>
-        )}
-
         <div className="stat-grid">
           <div className="stat">
             <div className="v num">{doneThisWeek.length}<span className="faint" style={{ fontSize: 14 }}>/4</span></div>
@@ -238,7 +216,7 @@ export function TodayScreen() {
         <Link to="/plan" className="card link-row" style={{ textDecoration: 'none', color: 'inherit', marginTop: 4 }}>
           <span>
             <span className="bold small" style={{ display: 'block' }}>See the full programme</span>
-            <span className="tiny faint">Your cycle, rest rules and progression</span>
+            <span className="tiny faint">Your week, rest rules and progression</span>
           </span>
           <ChevronRight />
         </Link>
