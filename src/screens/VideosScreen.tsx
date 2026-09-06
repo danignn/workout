@@ -112,9 +112,9 @@ export function VideosScreen() {
         <div className="card card-flat card-tight row" style={{ gap: 10, alignItems: 'flex-start' }}>
           <span style={{ color: 'var(--pink-500)', flexShrink: 0, marginTop: 1 }}><InfoIcon size={16} /></span>
           <span className="tiny muted">
-            TikTok does not allow its videos to play inside another app, so tapping one opens TikTok and comes back.
-            A video saved here skips that entirely: it plays in the app, instantly, with no signal, and it survives the
-            original post being deleted.
+            Videos play in the app, but they still depend on TikTok being reachable and the post staying up. A file
+            saved here needs neither: it plays instantly, works with no signal, and survives the original being
+            deleted.
           </span>
         </div>
 

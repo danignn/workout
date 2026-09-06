@@ -32,7 +32,11 @@ export function PhotoTile({ photo, onClick }: { photo: PhotoMeta; onClick?: () =
  * Shrinks a photo before storing it. Phone cameras produce 3–6MB files and a
  * year of progress photos at that size would be unreasonable to keep on device.
  */
-export async function compressImage(file: File, maxEdge = 1280): Promise<{ blob: Blob; width: number; height: number }> {
+export async function compressImage(
+  file: File,
+  maxEdge = 1280,
+  preserveAlpha = false,
+): Promise<{ blob: Blob; width: number; height: number }> {
   const bitmap = await createImageBitmap(file);
   const scale = Math.min(1, maxEdge / Math.max(bitmap.width, bitmap.height));
   const width = Math.round(bitmap.width * scale);
@@ -44,7 +48,11 @@ export async function compressImage(file: File, maxEdge = 1280): Promise<{ blob:
   if (!ctx) throw new Error('Could not process that image.');
   ctx.drawImage(bitmap, 0, 0, width, height);
   bitmap.close?.();
-  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.82));
+  // JPEG has no alpha channel, so anything with a cut-out background must stay
+  // PNG or it gains a solid rectangle behind it.
+  const blob = await new Promise<Blob | null>((resolve) =>
+    preserveAlpha ? canvas.toBlob(resolve, 'image/png') : canvas.toBlob(resolve, 'image/jpeg', 0.82),
+  );
   if (!blob) throw new Error('Could not process that image.');
   return { blob, width, height };
 }

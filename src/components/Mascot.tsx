@@ -147,7 +147,16 @@ function CustomMascot({ id }: { id: string }) {
     };
   }, [id]);
   if (!url) return null;
-  return <img src={url} alt="" width={44} height={44} style={{ objectFit: 'contain', borderRadius: 10 }} />;
+  // No fixed box and no rounding: the image keeps whatever shape it was drawn
+  // in, and a transparent PNG floats with no background at all.
+  return (
+    <img
+      src={url}
+      alt=""
+      className="mascot-custom"
+      style={{ maxWidth: 52, maxHeight: 52, width: 'auto', height: 'auto', display: 'block' }}
+    />
+  );
 }
 
 function renderMascot(id: MascotId, flap: number, customId?: string) {

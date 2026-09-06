@@ -185,7 +185,7 @@ export function MeScreen() {
                 const file = e.target.files?.[0];
                 if (!file) return;
                 try {
-                  const { blob } = await compressImage(file, 160);
+                  const { blob } = await compressImage(file, 160, true);
                   const id = uid();
                   await putPhoto(id, blob);
                   updateTheme({ mascot: 'custom', customMascotId: id });

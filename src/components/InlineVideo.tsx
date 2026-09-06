@@ -3,16 +3,14 @@ import { getPhoto } from '../store/idb';
 import { resolveShortTiktok, tiktokSource, type VideoSource } from '../utils/media';
 import { PlayIcon } from './Icons';
 
-/**
- * TikTok refuses to render its embed inside an installed web app, which left a
- * dead grey box where the video should be. YouTube and Drive do allow it, so
- * only those are embedded. A TikTok link opens in TikTok instead, which is the
- * behaviour that already worked for the warm-up videos.
- */
-type EmbeddableSource = Extract<VideoSource, { kind: 'youtube' | 'drive' }>;
+type EmbeddableSource = Extract<VideoSource, { kind: 'youtube' | 'drive' | 'tiktok' }>;
 
+/**
+ * Anything with a real embed address is played in place. A short share link
+ * only becomes embeddable once it has been resolved to its numeric id.
+ */
 function canEmbed(source: VideoSource): source is EmbeddableSource {
-  return source.kind === 'youtube' || source.kind === 'drive';
+  return source.kind === 'youtube' || source.kind === 'drive' || source.kind === 'tiktok';
 }
 
 function OpenButton({ source }: { source: VideoSource }) {
@@ -63,7 +61,7 @@ export function VideoPlayer({ source, onSaveFile }: { source: VideoSource; onSav
         Save a video file for this
       </button>
       <p className="tiny faint center">
-        Save it once and it plays right here, instantly and offline, even if the post is deleted.
+        Save it once and it plays instantly and offline, even if the original post is deleted.
       </p>
     </>
   );
@@ -83,10 +81,10 @@ export function VideoPlayer({ source, onSaveFile }: { source: VideoSource; onSav
     return (
       <div className="stack-sm">
         <iframe
-          className="video-frame video-frame-wide"
+          className={`video-frame${effective.kind === 'tiktok' ? '' : ' video-frame-wide'}`}
           src={effective.embed}
           title="Exercise form video"
-          allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
           referrerPolicy="strict-origin-when-cross-origin"
           allowFullScreen
         />
@@ -96,14 +94,13 @@ export function VideoPlayer({ source, onSaveFile }: { source: VideoSource; onSav
     );
   }
 
+  // A short link that could not be resolved has no embed address to use.
   return (
     <div className="stack-sm">
       <div className="video-poster">
         <span className="video-poster-icon"><PlayIcon size={26} /></span>
-        <span className="small bold">Opens in TikTok</span>
-        <span className="tiny muted center">
-          TikTok does not allow its videos to play inside another app, so it opens in TikTok and comes straight back.
-        </span>
+        <span className="small bold">Tap to watch</span>
+        <span className="tiny muted center">This one is a short share link, so it opens in TikTok.</span>
       </div>
       <OpenButton source={effective} />
       {saveRow}

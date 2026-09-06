@@ -755,3 +755,10 @@ input[type='date']::-webkit-date-and-time-value { text-align: left; }
   justify-content: center;
   box-shadow: var(--shadow-md);
 }
+
+/* A custom mascot keeps its own outline: no box, no rounding, no backdrop. */
+.mascot-custom {
+  background: none;
+  border-radius: 0;
+  object-fit: contain;
+}
